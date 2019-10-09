@@ -30,19 +30,19 @@ class CreateConfigurationFile(object):
 	#INPUT PARAMETERS
 
         self.scripts_dir = "/home/devel/dfuentes/LRSV_pipeline/src/bin$" #Directory with the different scripts for the pipeline
-        self.ONT_reads_directory = None                                   #Directory where the ont fastqs are stored
+        self.ONT_reads_directory = None                                  #Directory where the ont fastqs are stored
 	self.aligner_selection = "minimap2"				 #Default aligner
 	self.svcaller_selection = "svim"				 #Default sv caller
 	
 
 	#OUTPUT PARAMETERS
 
-        self.alignment_out = "Alignment"                      #Out directory of the alignment step
-        self.svcall_out=  "SV-calling"                                    #Out directory of the sv calls
+        self.alignment_out = "Alignment"                     #Out directory of the alignment step
+        self.svcall_out=  "SV-calling"                       #Out directory of the sv calls
     
 	#WILDCARD PARAMETER
 
-        self.ONT_fastqs = None                                           #List with basename of the ONT fastqs if any
+        self.ONT_fastqs = None                               #List with basename of the ONT fastqs if any
 
 	#MINIMAP2 PARAMETERS
 
@@ -204,7 +204,7 @@ class CreateConfigurationFile(object):
 	ngmlr_group.add_argument('--ngmlr-gap-extend-min', type = int, dest="ngmlr-gap-extend-min", metavar="ngmlr-gap-extend-min", default=self.ngmlr_gap_extend_min, help='Gap extend min. Default %s.' % self.ngmlr_gap_extend_min)
 
     def register_sniffles(self, parser):
-        """Register all minimap2 aligner parameters with the given
+        """Register all sniffles sv caller parameters with the given
         argparse parser
 
         parser -- the argparse parser
@@ -296,10 +296,6 @@ class CreateConfigurationFile(object):
         else:
             args.svcall_out = args.alignment_out  + self.svcall_out + "/"
     
-
-        ##Checking general parameters
-        #if args.LIMS_species==None:
-            #print "No LIMS species given"
 
         ##Assign wildcards
 
@@ -427,7 +423,7 @@ class CreateConfigurationFile(object):
 	self.svimParameters["svim_heterozygous_thresh"] = args.svim_heterozygous_thresh
         self.svimParameters["svim_min_depth"] = args.svim_min_depth
 	self.svimParameters["svim_duplicat_as_insert"] = args.svim_duplicat_as_insert
-        self.allParameters ["Assembly"] = self.assemblyParameters
+        self.allParameters ["Svim"] = self.svimParameters
 
 
 #####
