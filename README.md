@@ -1,4 +1,4 @@
-# LR-SVpipe
+# NanoLR-SVpipe
 
 
 
