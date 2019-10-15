@@ -7,7 +7,7 @@ import re
 
 #Author: Diego Fuentes
 #Contact email: diegofupa@gmail.com
-#Date:2019-07-04
+#Date:2019-10-01
 
 ont_barcodes = []    #List to store the ont barcodes
 
