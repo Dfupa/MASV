@@ -1,0 +1,14 @@
+name: pipeline-env
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - python=3.7.1	#Or python/3.5.1
+  - minimap2=2.17	#Or minimap2/2.9
+  - ngmlr=0.2.7
+  - sniffles=1.0.11
+  - svim=1.2.0 
+  - samtools=1.9
+  - snakemake=5.7.0	#Or snakemake/>=3.6.0
+  - bedtools=2.27.1	#Or bedtools/2.29.0
+
