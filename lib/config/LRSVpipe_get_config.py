@@ -31,6 +31,7 @@ class CreateConfigurationFile(object):
 
         self.scripts_dir = "/home/devel/dfuentes/LRSV_pipeline/src/bin$" #Directory with the different scripts for the pipeline
         self.ONT_reads_directory = None                                  #Directory where the ont fastqs are stored
+	self.reference_genome = None					 #Directory were the reference genome is located
         self.aligner_selection = "minimap2"                              #Default aligner
         self.svcaller_selection = "svim"                                 #Default sv caller
 
@@ -145,6 +146,7 @@ class CreateConfigurationFile(object):
         input_group = parser.add_argument_group('Inputs')
         input_group.add_argument('--scripts-dir', dest="scripts_dir", default=self.scripts_dir, help='Directory with the different scripts for the pipeline. Default %s.' % self.scripts_dir)
         input_group.add_argument('--ont-reads-directory', dest="ONT_reads_directory", help='Directory where the ont fastqs are stored. Default %s.' % self.ONT_reads_directory)
+	input_group.add_argument('--reference_genome', dest="reference_genome", help='Directory where the reference genome is stored. Default %s.' % self.ONT_reads_directory)
         input_group.add_argument('--aligner_selection', dest="aligner_selection", default=self.aligner_selection, help='Selects the aligner to be used in the pipeline. Default "%s".' % self.aligner_selection)
         input_group.add_argument('--svcaller_selection', dest="svcaller_selection", default=self.svcaller_selection, help='Selects the SV caller to be used in the pipeline. Default "%s".' % self.svcaller_selection)
 
@@ -286,6 +288,13 @@ class CreateConfigurationFile(object):
         if not os.path.exists(args.ONT_reads_directory):
             print(args.ONT_reads_directory + " not found")
 
+	if args.reference_genome:
+            args.reference_genome = os.path.abspath(args.reference_genome) + "/"
+        if args.reference_genome == None:
+            print("No reference genome directory found")
+            parser.print_help()
+            sys.exit(-1)
+
         if args.alignment_out:
             args.alignment_out = os.path.abspath(args.alignment_out) + "/"
         else:
@@ -332,6 +341,7 @@ class CreateConfigurationFile(object):
         self.inputParameters["aligner_selection"] = args.aligner_selection
         self.inputParameters["svcaller_selection"] = args.svcaller_selection
         self.inputParameters["ONT_reads_directory"] = args.ONT_reads_directory
+	self.inputParameters["reference_genome"] = args.reference_genome = None
         self.allParameters ["Inputs"] = self.inputParameters
 
     def storeOutputParameters(self,args):
