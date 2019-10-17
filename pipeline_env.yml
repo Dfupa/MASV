@@ -11,4 +11,5 @@ dependencies:
   - snakemake=5.7.0 #Or snakemake/>=3.6.0
   - bedtools=2.27.1 #Or bedtools/2.29.0
   - bcftools=1.9
-
+  - mosdepth=0.2.6
+  - vcftools=0.1.16
