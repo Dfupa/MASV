@@ -26,10 +26,10 @@ class CreateConfigurationFile(object):
         self.logs_dir = "logs"                               #Directory to keep all the log files
         self.sample_barcode = None                           #Sample barcode 
         self.basedir = self.sample_barcode                   #Base directory for the pipeline run
+	self.single = False                                  #Parameter that is going to be used for the helper function
 
         #INPUT PARAMETERS
 
-        self.scripts_dir = "/home/devel/dfuentes/LRSV_pipeline/src/bin$" #Directory with the different scripts for the pipeline
         self.ONT_reads_directory = None                                  #Directory where the ont fastqs are stored
         self.reference_genome = None                                     #Directory were the reference genome is located
         self.aligner_selection = "minimap2"                              #Default aligner
@@ -135,6 +135,7 @@ class CreateConfigurationFile(object):
         general_group.add_argument('--logs-dir', dest="logs_dir", metavar="logs_dir", help='Directory to keep all the log files. Default sample_barcode id.')
         general_group.add_argument('--sample-barcode', dest="sample_barcode", metavar="sample_barcode", help='Sample barcode. Default %s.' % self.sample_barcode)
         general_group.add_argument('--basedir', dest="basedir", metavar="basedir", help='Base directory for the pipeline run. Default %s.' % self.basedir)
+	general_group.add_argument('--single', dest="single", type=bool, default=self.single, help='Parameter used for the helper function find_files. Default %s.' % self.single)
 
 
     def register_input(self, parser):
@@ -144,11 +145,10 @@ class CreateConfigurationFile(object):
         parser -- the argparse parser
         """
         input_group = parser.add_argument_group('Inputs')
-        input_group.add_argument('--scripts-dir', dest="scripts_dir", default=self.scripts_dir, help='Directory with the different scripts for the pipeline. Default %s.' % self.scripts_dir)
-        input_group.add_argument('--ont-reads-directory', dest="ONT_reads_directory", help='Directory where the ont fastqs are stored. Default %s.' % self.ONT_reads_directory)
-        input_group.add_argument('--reference_genome', dest="reference_genome", help='Directory where the reference genome is stored. Default %s.' % self.reference_genome)
-        input_group.add_argument('--aligner_selection', dest="aligner_selection", default=self.aligner_selection, help='Selects the aligner to be used in the pipeline. Default "%s".' % self.aligner_selection)
-        input_group.add_argument('--svcaller_selection', dest="svcaller_selection", default=self.svcaller_selection, help='Selects the SV caller to be used in the pipeline. Default "%s".' % self.svcaller_selection)
+        input_group.add_argument('--ont-reads-directory', dest="ONT-reads-directory", metavar="ONT-reads-directory", help='Directory where the ont fastqs are stored. Default %s.' % self.ONT_reads_directory)
+        input_group.add_argument('--reference-genome', dest="reference_genome", metavar="reference_genome", help='Directory where the reference genome is stored. Default %s.' % self.reference_genome)
+        input_group.add_argument('--aligner-selection', dest="aligner_selection", metavar="aligner_selection", default=self.aligner_selection, help='Selects the aligner to be used in the pipeline. Default "%s".' % self.aligner_selection)
+        input_group.add_argument('--sv-caller-selection', dest="sv_caller_selection",  metavar="sv_caller_selection", default=self.svcaller_selection, help='Selects the SV caller to be used in the pipeline. Default "%s".' % self.svcaller_selection)
 
 
     
@@ -161,7 +161,7 @@ class CreateConfigurationFile(object):
 
         output_group = parser.add_argument_group('Outputs')
         output_group.add_argument('--alignment-out', dest="alignment_out", help='Out directory of the alignment step. Default "/%s"' % self.alignment_out)
-        output_group.add_argument('--sv_call-out', dest="sv_call_out", help='Out directory of the sv calls. Default "/%s"' % self.sv_call_out)
+        output_group.add_argument('--sv-call-out', dest="sv_call_out", help='Out directory of the sv calls. Default "/%s"' % self.sv_call_out)
 
 
     def register_wildcards(self, parser):
@@ -274,19 +274,14 @@ class CreateConfigurationFile(object):
         else:
             args.logs_dir = args.basedir + self.logs_dir + "/"
 
-        if args.scripts_dir:
-            args.scripts_dir = os.path.abspath(args.scripts_dir) + "/"
-        else:
-            args.scripts_dir = os.path.abspath(self.scripts_dir) + "/"
-        if not os.path.exists(args.scripts_dir):
-            print(args.scripts_dir + " not found")
-
         if args.ONT_reads_directory:
             args.ONT_reads_directory = os.path.abspath(args.ONT_reads_directory) + "/"
         else:
             args.ONT_reads_directory =  working_dir + "reads/ont/" + args.sample_barcode + "/"
         if not os.path.exists(args.ONT_reads_directory):
-            print(args.ONT_reads_directory + " not found")
+            print(args.ONT_reads_directory + " not found. The directory where the reads are located is required. Exiting now.")
+	    parser.print_help()
+            sys.exit(-1)
             
         if args.reference_genome:
             args.reference_genome = os.path.abspath(args.reference_genome) + "/"
@@ -331,6 +326,7 @@ class CreateConfigurationFile(object):
         self.generalParameters["basedir"] = args.basedir
         self.generalParameters["logs_dir"] = args.logs_dir
         self.generalParameters["sample_barcode"] = args.sample_barcode
+	self.generalParameters["single"] = args.single
         self.allParameters["Parameters"] = self.generalParameters
 
     def storeInputParameters(self,args):
@@ -338,7 +334,7 @@ class CreateConfigurationFile(object):
 
         args -- set of parsed arguments
         """
-        self.inputParameters["scripts_dir"] = args.scripts_dir
+
         self.inputParameters["aligner_selection"] = args.aligner_selection
         self.inputParameters["svcaller_selection"] = args.svcaller_selection
         self.inputParameters["ONT_reads_directory"] = args.ONT_reads_directory
