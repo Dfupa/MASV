@@ -23,7 +23,7 @@ def find_files(directory, single=False, pattern="*.fastq"):
     if os.path.isfile(folder):
         return folder
     else:
-        print ()"We were unable to find the provided path for the input directory. Exiting now.")
+        print ("We were unable to find the provided path for the input directory. Exiting now.")
         sys.exit(-1)
     
     files = []
