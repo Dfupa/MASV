@@ -26,6 +26,7 @@ class CreateConfigurationFile(object):
         self.logs_dir = "logs"                               #Directory to keep all the log files
         self.sample_barcode = None                           #Sample barcode 
         self.basedir = self.sample_barcode                   #Base directory for the pipeline run
+	self.seq_technology = "nanopore"		     #Sequencing technology
 	self.single = False                                  #Parameter that is going to be used for the helper function
 
         #INPUT PARAMETERS
@@ -136,7 +137,7 @@ class CreateConfigurationFile(object):
         general_group.add_argument('--sample-barcode', dest="sample_barcode", metavar="sample_barcode", help='Sample barcode. Default %s.' % self.sample_barcode)
         general_group.add_argument('--basedir', dest="basedir", metavar="basedir", help='Base directory for the pipeline run. Default %s.' % self.basedir)
 	general_group.add_argument('--single', dest="single", type=bool, default=self.single, help='Parameter used for the helper function find_files. Default %s.' % self.single)
-
+	general_group.add_argument('--sequencing-technology', type=str, dest="sequencing_technology", metavar="sequencing_technology", default=self.seq_technology, help='Parameter used for determining the sequencing technology ("nanopore" or "pacbio"). Default %s.' % self.seq_technology)
 
     def register_input(self, parser):
         """Register all input parameters with the given
@@ -327,6 +328,7 @@ class CreateConfigurationFile(object):
         self.generalParameters["logs_dir"] = args.logs_dir
         self.generalParameters["sample_barcode"] = args.sample_barcode
 	self.generalParameters["single"] = args.single
+	self.generalParameters["seq_technology"] = args.seq_technology
         self.allParameters["Parameters"] = self.generalParameters
 
     def storeInputParameters(self,args):
