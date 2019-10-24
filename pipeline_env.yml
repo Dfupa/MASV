@@ -15,3 +15,4 @@ dependencies:
   - vcftools=0.1.16
   - nanoplot=1.27.0
   - nanofilt=2.5.0
+  - svtools=0.5.1
