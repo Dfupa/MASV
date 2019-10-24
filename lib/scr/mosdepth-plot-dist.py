@@ -1,3 +1,5 @@
+#This code was extracted originally from the Mosdepth repository: https://github.com/brentp/mosdepth/blob/master/scripts/plot-dist.py
+
 import sys
 import string
 import json
