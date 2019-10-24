@@ -1,5 +1,3 @@
-#Original code found in the mosdepth repository: https://github.com/brentp/mosdepth/blob/master/scripts/plot-dist.py
-
 import sys
 import string
 import json
@@ -70,8 +68,8 @@ def main():
         showlegend: $showlegend,
         autosize: true,
         legend: {
-            x: 0.1,
-            y: 0.1
+            x: 0.8,
+            y: 0.4
         },
     }
     """
