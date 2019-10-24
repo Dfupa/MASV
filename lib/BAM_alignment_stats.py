@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-
+#Code originally taken from https://github.com/eldariont/long-read-sv-calling-eval/blob/master/scripts/alignment_stats.py
 import pysam
 from argparse import ArgumentParser
 
