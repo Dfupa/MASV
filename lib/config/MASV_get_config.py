@@ -96,7 +96,7 @@ class CreateConfigurationFile(object):
         self.svim_homozygous_thresh = 0.8           #Minimum variant allele frequency to be called as homozygous
         self.svim_heterozygous_thresh = 0.2         #Minimum variant allele frequency to be called as heterozygous
         self.svim_min_depth = 4                     #Minimum total read depth for genotyping
-        self.minscore = 10			    #Minimum quality score to filter SVIM
+        self.svim_min_score = 10			    #Minimum quality score to filter SVIM
 ###
         #DICTIONARIES
         self.allParameters = {}
@@ -244,7 +244,7 @@ class CreateConfigurationFile(object):
         svim_group.add_argument('--svim-homozygous-thresh', type = float, dest="svim_homozygous_thresh", metavar="svim-homozygous-thresh", default=self.svim_homozygous_thresh, help='Minimum variant allele frequency to be called as homozygous. Default %s.' % self.svim_homozygous_thresh)
         svim_group.add_argument('--svim-heterozygous-thresh', type = float, dest="svim_heterozygous_thresh", metavar="svim-heterozygous-thresh", default=self.svim_heterozygous_thresh, help='Minimum variant allele frequency to be called as heterozygous. Default %s.' % self.svim_heterozygous_thresh)
         svim_group.add_argument('--svim-min-depth', type = int, dest="svim_min_depth", metavar="svim-min-depth", default=self.svim_min_depth, help='Minimum total read depth for genotyping. Default %s.' % self.svim_min_depth)
-        svim_group.add_argument('--min-score', type = bool, dest="svim_min_score", metavar="svim-min-score", default=self.minscore, help='Minimum quality score used to filter SVIM results. Default "%s".' % self.minscore)
+        svim_group.add_argument('--svim-min-score', type = bool, dest="svim_min_score", metavar="svim-min-score", default=self.svim_min_score, help='Minimum quality score used to filter SVIM results. Default "%s".' % self.svim_min_score)
 
 ####
 
@@ -428,7 +428,7 @@ class CreateConfigurationFile(object):
         self.svimParameters["svim_homozygous_thresh"] = args.svim_homozygous_thresh
         self.svimParameters["svim_heterozygous_thresh"] = args.svim_heterozygous_thresh
         self.svimParameters["svim_min_depth"] = args.svim_min_depth
-        self.svimParameters["minscore"] = args.minscore
+        self.svimParameters["svim_min_score"] = args.svim_min_score
         self.allParameters ["Svim"] = self.svimParameters
 
 
