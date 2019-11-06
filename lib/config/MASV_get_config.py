@@ -244,7 +244,7 @@ class CreateConfigurationFile(object):
         svim_group.add_argument('--svim-homozygous-thresh', type = float, dest="svim_homozygous_thresh", metavar="svim-homozygous-thresh", default=self.svim_homozygous_thresh, help='Minimum variant allele frequency to be called as homozygous. Default %s.' % self.svim_homozygous_thresh)
         svim_group.add_argument('--svim-heterozygous-thresh', type = float, dest="svim_heterozygous_thresh", metavar="svim-heterozygous-thresh", default=self.svim_heterozygous_thresh, help='Minimum variant allele frequency to be called as heterozygous. Default %s.' % self.svim_heterozygous_thresh)
         svim_group.add_argument('--svim-min-depth', type = int, dest="svim_min_depth", metavar="svim-min-depth", default=self.svim_min_depth, help='Minimum total read depth for genotyping. Default %s.' % self.svim_min_depth)
-        svim_group.add_argument('--svim-min-score', type = bool, dest="svim_min_score", metavar="svim-min-score", default=self.svim_min_score, help='Minimum quality score used to filter SVIM results. Default "%s".' % self.svim_min_score)
+        svim_group.add_argument('--svim-min-score', type = int, dest="svim_min_score", metavar="svim-min-score", default=self.svim_min_score, help='Minimum quality score used to filter SVIM results. Default "%s".' % self.svim_min_score)
 
 ####
 
