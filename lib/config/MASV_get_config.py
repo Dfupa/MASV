@@ -285,9 +285,8 @@ class CreateConfigurationFile(object):
             
         if args.reference_genome:
             args.reference_genome = os.path.abspath(args.reference_genome) + "/"
-
-        if args.reference_genome == None:
-            print("No reference genome directory found")
+        if not os.path.exists(args.reference_genome):
+            print("The reference genome has been not provided. Exiting now")
             parser.print_help()
             sys.exit(-1)
 
