@@ -8,7 +8,7 @@ rule sv_calling:
         svcaller = config["Inputs"]["svcaller_selection"],
         ref = config["Inputs"]["reference_genome"]
     output:
-        VCF = workingdir + str(date) + "/{params.outdir}/{sample}_{input.svcaller}.VCF",
+        VCF = workingdir + str(date) + "/{params.outdir}/{sample}_{input.svcaller}.vcf",
         outDIR = workingdir + str(date) + "/{params.outdir}/)
     params:
         outdir = directory (config["Outputs"]["sv_call_out"]),
