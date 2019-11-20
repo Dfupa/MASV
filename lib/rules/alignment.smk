@@ -69,7 +69,7 @@ rule mapping:
         kmer_length_ngmlr = config["Ngmlr"]["ngmlr_kmer_length"],
         kmer_skip_ngmlr = config["Ngmlr"]["ngmlr_kmer_length"]
         
-    log:
+    logs:
         logs_dir + str(date) + ".{ontfile}.alignment.log"
         
     benchmark:
@@ -86,7 +86,7 @@ rule mapping:
             shell("mkdir -p {params.outdir}; cd {params.outdir}; minimap2 -t {threads.minimap2_threads} \
             --MD -A {params.match_score_mm2} -B {params.mismatch_score_mm2} -O {params.gap_open_score_mm2} \
             -u {params.GT_AG_find_mm2} -ax {params.mapping_tech_minimap} {input.ref} {input.reads} | samtools sort \
-            -@ {threads.minimap2_threads} -O BAM -o {output} 2> {log}")
+            -@ {threads.minimap2_threads} -O BAM -o {output} 2> {logs}")
 
         elif aligner == "ngmlr":    #If the selected aligner is ngmlr
             shell("mkdir -p {params.outdir}; cd {params.outdir}; ngmlr -t {threads.ngmlr_threads} \
@@ -94,7 +94,7 @@ rule mapping:
             --mismatch {params.mismatch_score_ngmlr} --gap-open {params.gap_open_score_ngmlr} \
             --gap-extend-max {params.gap_extend_max_ngmlr} --gap-extend-min {params.gap_extend_min_ngmlr} \
             --kmer-skip {params.kmer_skip_ngmlr} -k {params.kmer_length_ngmlr} -r {input.ref} \
-            -q {input.reads} | samtools sort -@ {threads.minimap2_threads} -O BAM -o {output} 2> {log} {output}")
+            -q {input.reads} | samtools sort -@ {threads.minimap2_threads} -O BAM -o {output} 2> {logs}")
         else:
             shell("echo 'An error ocurred in the mapping step. Please, resubmit a valid aligner: minimap2, ngmlr.' > mapping.err; exit")
 
@@ -106,7 +106,7 @@ rule index_bam:
     output:
         BAI = workingdir + str(date) + "/{rules.mapping.params.outdir}/{sample}_{rules.mapping.input.aligner}_sorted.bam.bai"
         
-    log:
+    logs:
         logs_dir + str(date) + ".{ontfile}.index_bam.log"
         
     threads:
@@ -115,7 +115,7 @@ rule index_bam:
     conda: "pipeline_env.yml"
         
     shell:
-        "samtools index -@ {threads} {input.BAM} {output.BAI} 2> {log}"
+        "samtools index -@ {threads} {input.BAM} {output.BAI} 2> {logs}"
         
 
 rule alignment_stats:
@@ -123,11 +123,11 @@ rule alignment_stats:
         BAM = rules.mapping.sort_bam.output.outBAM
     output:
          "{rules.mapping.input.aligner}/alignment_stats/alignment_stats.txt"
-    log:
+    logs:
         logs_dir + str(date) +".{ontfile}.alignment_stats.log"
         
     conda: "pipeline_env.yml"
         
     shell:
         "python3 " + os.path.join(workflow.basedir, "lib/scr/alignment_stats.py") + \
-            " -o {output} {input.BAM} 2> {log}
+            " -o {output} {input.BAM} 2> {logs}
