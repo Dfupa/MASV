@@ -83,10 +83,18 @@ rule mapping:
   
     run:
         if aligner == "minimap2":   #If the selected aligner is minimap2
-            shell("mkdir -p {params.outdir}; cd {params.outdir}; minimap2 -t {threads.minimap2_threads} --MD -A {params.match_score_mm2} -B {params.mismatch_score_mm2} -O {params.gap_open_score_mm2} -u {params.GT_AG_find_mm2} -ax {params.mapping_tech_minimap} {input.ref} {input.reads} | samtools sort -@ {threads.minimap2_threads} -O BAM -o {output} 2> {log}")
+            shell("mkdir -p {params.outdir}; cd {params.outdir}; minimap2 -t {threads.minimap2_threads} \
+            --MD -A {params.match_score_mm2} -B {params.mismatch_score_mm2} -O {params.gap_open_score_mm2} \
+            -u {params.GT_AG_find_mm2} -ax {params.mapping_tech_minimap} {input.ref} {input.reads} | samtools sort \
+            -@ {threads.minimap2_threads} -O BAM -o {output} 2> {log}")
 
         elif aligner == "ngmlr":    #If the selected aligner is ngmlr
-            shell("mkdir -p {params.outdir}; cd {params.outdir}; srun ngmlr -t {threads.ngmlr_threads} -x {params.mapping_tech_ngmlr} -i {params.min_ident_ngmlr} --match {params.match_score_ngmlr} --mismatch {params.mismatch_score_ngmlr} --gap-open {params.gap_open_score_ngmlr} --gap-extend-max {params.gap_extend_max_ngmlr} --gap-extend-min {params.gap_extend_min_ngmlr} --kmer-skip {params.kmer_skip_ngmlr} -k {params.kmer_length_ngmlr} -r {input.ref} -q {input.reads} | samtools sort -@ {threads.minimap2_threads} -O BAM -o {output} 2> {log} {output}")
+            shell("mkdir -p {params.outdir}; cd {params.outdir}; ngmlr -t {threads.ngmlr_threads} \
+            -x {params.mapping_tech_ngmlr} -i {params.min_ident_ngmlr} --match {params.match_score_ngmlr} \
+            --mismatch {params.mismatch_score_ngmlr} --gap-open {params.gap_open_score_ngmlr} \
+            --gap-extend-max {params.gap_extend_max_ngmlr} --gap-extend-min {params.gap_extend_min_ngmlr} \
+            --kmer-skip {params.kmer_skip_ngmlr} -k {params.kmer_length_ngmlr} -r {input.ref} \
+            -q {input.reads} | samtools sort -@ {threads.minimap2_threads} -O BAM -o {output} 2> {log} {output}")
         else:
             shell("echo 'An error ocurred in the mapping step. Please, resubmit a valid aligner: minimap2, ngmlr.' > mapping.err; exit")
 
