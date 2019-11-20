@@ -51,7 +51,7 @@ rule sv_calling:
             -q {params.min_read_map_quality_sniffles} -n {params.num_reads_report_sniffles} \
             --genotype {params.genotype_sniffles} --min_homo_af {params.min_homo_af_sniffles} \
             --min_het_af {params.min_het_af_sniffles} --cluster {params.cluster_sniffles} --report_read_strands \
-            -v {output.VCF} 2> {log}")
+            -v {output.VCF} 2> {logs}")
             
         if svcaller == "svim":        #If the selected caller is svim
             shell("svim alignment --min_sv_size {params.min_sv_length_svim} --max_sv_size {params.max_sv_length_svim} \
@@ -60,7 +60,7 @@ rule sv_calling:
             --trans_partition_max_distance{params.partition_max_distance_svim} --trans_sv_max_distance {params.sv_max_distance_svim} \
             --minimum_score {params.svim_min_geno_score} --homozygous_threshold {params.homozygous_thresh_svim} \
             --heterozygous_threshold {params.heterozygous_thresh_svim} --minimum_depth {params.min_depth_svim} \
-            --duplications_as_insertions {output.outDIR} {input.BAM} {input.ref} 2> {log}")
+            --duplications_as_insertions {output.outDIR} {input.BAM} {input.ref} 2> {logs}")
 
 rule filter_svim:
     input:
@@ -74,13 +74,14 @@ rule filter_svim:
     params:
         minscore = config["Svim"]["svim_mins_core"]
    
-   log:
-        logs: logs_dir + str(date) + ".{ontfile}.svim_filtering.log"
+   logs:
+        logs_dir + str(date) + ".{ontfile}.svim_filtering.log"
             
     conda: "pipeline_env.yml"
         
     run:
         if rules.sv_calling.input.svcaller == "svim"
-            shell("grep -v \"hom_ref\" {input} | awk '{{ if($1 ~ /^#/) {{ print $0 }} else {{ if($6>={params.minscore}) {{ print $0 }} }} }}' > {output}")
+            shell("grep -v \"hom_ref\" {input} | awk '{{ if($1 ~ /^#/) {{ print $0 }} \
+            else {{ if($6>={params.minscore}) {{ print $0 }} }} }}' > {output} 2> {logs}")
         else:
-            shell("echo 'The filter_svim step is aborted as it is not necessary for Sniffles calling. Continuing.'")
+            shell("echo 'The filter_svim step is aborted as it is not necessary for Sniffles calling. Continuing.' 2> {logs}")
