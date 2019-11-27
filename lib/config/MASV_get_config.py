@@ -253,7 +253,10 @@ class CreateConfigurationFile(object):
     def check_parameters(self,args):
         """Check parameters consistency
             
-        args -- set of parsed arguments"""
+        args -- set of parsed arguments
+        
+        Note that by using os.path.exist it only checks if the file/directory exist but function may return False, 
+        if permission is not granted to execute os.stat() on the requested file, even if the path exists. """
 
         if args.configFile==None:
             parser.print_help()
