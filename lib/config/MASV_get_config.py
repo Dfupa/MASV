@@ -22,19 +22,20 @@ class CreateConfigurationFile(object):
         #GENERAL PARAMETERS
 
         self.configFile = None                               #Name of the json configuration file to be created.
-        self.version = 1    				     #Pipeline version
+        self.version = 1                                     #Pipeline version
         self.logs_dir = "logs"                               #Directory to keep all the log files
         self.sample_barcode = None                           #Sample barcode 
         self.basedir = self.sample_barcode                   #Base directory for the pipeline run
-	self.seq_technology = "nanopore"		     #Sequencing technology
-	self.single = False                                  #Parameter that is going to be used for the helper function
+        self.seq_technology = "nanopore"                     #Sequencing technology
+        self.single = False                                  #Parameter that is going to be used for the helper function
 
         #INPUT PARAMETERS
 
-        self.ONT_reads_directory = None                                  #Directory where the ont fastqs are stored
-        self.reference_genome = None                                     #Directory were the reference genome is located
-        self.aligner_selection = "minimap2"                              #Default aligner
-        self.svcaller_selection = "svim"                                 #Default sv caller
+        self.ONT_reads_directory = None          #Directory where the ont fastqs are stored
+        self.reference_genome = None             #Reference genome provided in .fa or .fa.gz format
+        self.hq_vcf = None                       #Provided high confidence .vcf.gz for truvari evaluation (Alpha)
+        self.aligner_selection = "minimap2"      #Default aligner
+        self.svcaller_selection = "svim"         #Default sv caller
 
 
         #OUTPUT PARAMETERS
@@ -96,7 +97,7 @@ class CreateConfigurationFile(object):
         self.svim_homozygous_thresh = 0.8           #Minimum variant allele frequency to be called as homozygous
         self.svim_heterozygous_thresh = 0.2         #Minimum variant allele frequency to be called as heterozygous
         self.svim_min_depth = 4                     #Minimum total read depth for genotyping
-        self.svim_min_score = 10			    #Minimum quality score to filter SVIM
+        self.svim_min_score = 10                    #Minimum quality score to filter SVIM
 ###
         #DICTIONARIES
         self.allParameters = {}
@@ -135,8 +136,8 @@ class CreateConfigurationFile(object):
         general_group.add_argument('--logs-dir', dest="logs_dir", metavar="logs_dir", help='Directory to keep all the log files. Default sample_barcode id.')
         general_group.add_argument('--sample-barcode', dest="sample_barcode", metavar="sample_barcode", help='Sample barcode. Default %s.' % self.sample_barcode)
         general_group.add_argument('--basedir', dest="basedir", metavar="basedir", help='Base directory for the pipeline run. Default %s.' % self.basedir)
-	general_group.add_argument('--single', dest="single", type=bool, default=self.single, help='Parameter used for the helper function find_files. Default %s.' % self.single)
-	general_group.add_argument('--sequencing-technology', type=str, dest="sequencing_technology", metavar="sequencing_technology", default=self.seq_technology, help='Parameter used for determining the sequencing technology ("nanopore" or "pacbio"). Default %s.' % self.seq_technology)
+        general_group.add_argument('--single', dest="single", type=bool, default=self.single, help='Parameter used for the helper function find_files. Default %s.' % self.single)
+        general_group.add_argument('--sequencing-technology', type=str, dest="seq_technology", metavar="seq_technology", default=self.seq_technology, help='Parameter used for determining the sequencing technology ("nanopore" or "pacbio"). Default %s.' % self.seq_technology)
 
     def register_input(self, parser):
         """Register all input parameters with the given
@@ -145,10 +146,11 @@ class CreateConfigurationFile(object):
         parser -- the argparse parser
         """
         input_group = parser.add_argument_group('Inputs')
-        input_group.add_argument('--ont-reads-directory', dest="ONT-reads-directory", metavar="ONT-reads-directory", help='Directory where the ont fastqs are stored. Default %s.' % self.ONT_reads_directory)
-        input_group.add_argument('--reference-genome', dest="reference_genome", metavar="reference_genome", help='Directory where the reference genome is stored. Default %s.' % self.reference_genome)
+        input_group.add_argument('--ont-reads-directory', dest="ONT_reads_directory", metavar="ONT_reads_directory", help='Directory where the ont fastqs are stored. Default %s.' % self.ONT_reads_directory)
+        input_group.add_argument('--reference-genome', dest="reference_genome", metavar="reference_genome", help='Reference genome provided in .fa or .fa.gz format. Your path is  %s.' % self.reference_genome)
+        input_group.add_argument('--hq-vcf', dest="hq_vcf", metavar="hq_vcf", help='Provided high confidence .vcf.gz for truvari evaluation (Alpha). Your path is  %s.' % self.hq_vcf) 
         input_group.add_argument('--aligner-selection', dest="aligner_selection", metavar="aligner_selection", default=self.aligner_selection, help='Selects the aligner to be used in the pipeline. Default "%s".' % self.aligner_selection)
-        input_group.add_argument('--sv-caller-selection', dest="sv_caller_selection",  metavar="sv_caller_selection", default=self.svcaller_selection, help='Selects the SV caller to be used in the pipeline. Default "%s".' % self.svcaller_selection)
+        input_group.add_argument('--sv_caller-selection', dest="svcaller_selection",  metavar="svcaller_selection", default=self.svcaller_selection, help='Selects the SV caller to be used in the pipeline. Default "%s".' % self.svcaller_selection)
 
 
     
@@ -260,7 +262,7 @@ class CreateConfigurationFile(object):
         working_dir = os.getcwd() + "/"
 
         if args.sample_barcode == None:
-            print("No sample_barcode specified")
+            print("No sample_barcode specified. A barcode or identification is required")
             parser.print_help()
             sys.exit(-1)
 
@@ -273,6 +275,7 @@ class CreateConfigurationFile(object):
             args.logs_dir = os.path.abspath(args.logs_dir) + "/"
         else:
             args.logs_dir = args.basedir + self.logs_dir + "/"
+            
 
         if args.ONT_reads_directory:
             args.ONT_reads_directory = os.path.abspath(args.ONT_reads_directory) + "/"
@@ -280,15 +283,25 @@ class CreateConfigurationFile(object):
             args.ONT_reads_directory =  working_dir + "reads/ont/" + args.sample_barcode + "/"
         if not os.path.exists(args.ONT_reads_directory):
             print(args.ONT_reads_directory + " not found. The directory where the reads are located is required. Exiting now.")
-	    parser.print_help()
+            parser.print_help()
             sys.exit(-1)
             
         if args.reference_genome:
-            args.reference_genome = os.path.abspath(args.reference_genome) + "/"
+            args.reference_genome = os.path.abspath(args.reference_genome)+ "/"
+        else:
+            args.reference_genome = working_dir + "reference/genome.fa"
+
         if not os.path.exists(args.reference_genome):
-            print("The reference genome has been not provided. Exiting now")
+            print("The reference genome has been not provided or it has not been found in "+args.reference_genome+". Exiting now")
             parser.print_help()
             sys.exit(-1)
+
+        if args.hq_vcf:
+            args.hq_vcf = os.path.abspath(args.hq_vcf)
+        else:
+            args.hq_vcf = working_dir + "truth_dataset/hq.sv.vcf.gz"
+        if not os.path.exists(args.hq_vcf):
+            print("The high confidence .vcf.gz has not been provided in the path "+args.hq_vcf+" . Note that the truvari evaluation will not be completed")
 
         if args.alignment_out:
             args.alignment_out = os.path.abspath(args.alignment_out) + "/"
@@ -325,8 +338,8 @@ class CreateConfigurationFile(object):
         self.generalParameters["basedir"] = args.basedir
         self.generalParameters["logs_dir"] = args.logs_dir
         self.generalParameters["sample_barcode"] = args.sample_barcode
-	self.generalParameters["single"] = args.single
-	self.generalParameters["seq_technology"] = args.seq_technology
+        self.generalParameters["single"] = args.single
+        self.generalParameters["seq_technology"] = args.seq_technology
         self.allParameters["Parameters"] = self.generalParameters
 
     def storeInputParameters(self,args):
@@ -339,6 +352,7 @@ class CreateConfigurationFile(object):
         self.inputParameters["svcaller_selection"] = args.svcaller_selection
         self.inputParameters["ONT_reads_directory"] = args.ONT_reads_directory
         self.inputParameters["reference_genome"] = args.reference_genome
+        self.inputParameters["hq_vcf"] = args.hq_vcf
         self.allParameters ["Inputs"] = self.inputParameters
 
     def storeOutputParameters(self,args):
