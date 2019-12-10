@@ -33,7 +33,7 @@ class CreateConfigurationFile(object):
 
         self.ONT_reads_directory = None          #Directory where the ont fastqs are stored
         self.reference_genome = None             #Reference genome provided in .fa or .fa.gz format
-        self.hq_vcf = None                       #Provided high confidence .vcf.gz for truvari evaluation (Alpha)
+        self.hq_vcf = None                       #Provided high confidence .vcf/.bed for eval_stats.py. It can be used to provide a .vcf.gz for truvari evaluation (Alpha)
         self.aligner_selection = "minimap2"      #Default aligner
         self.svcaller_selection = "svim"         #Default sv caller
 
@@ -148,7 +148,7 @@ class CreateConfigurationFile(object):
         input_group = parser.add_argument_group('Inputs')
         input_group.add_argument('--ont-reads-directory', dest="ONT_reads_directory", metavar="ONT_reads_directory", help='Directory where the ont fastqs are stored. Default %s.' % self.ONT_reads_directory)
         input_group.add_argument('--reference-genome', dest="reference_genome", metavar="reference_genome", help='Reference genome provided in .fa or .fa.gz format. Your path is  %s.' % self.reference_genome)
-        input_group.add_argument('--hq-vcf', dest="hq_vcf", metavar="hq_vcf", help='Provided high confidence .vcf.gz for truvari evaluation (Alpha). Your path is  %s.' % self.hq_vcf) 
+        input_group.add_argument('--hq-vcf', dest="hq_vcf", metavar="hq_vcf", help='Provided high confidence .vcf/.bed for eval_stats.py. It can be used to provide a .vcf.gz for truvari evaluation (Alpha). Your path is  %s.' % self.hq_vcf) 
         input_group.add_argument('--aligner-selection', dest="aligner_selection", metavar="aligner_selection", default=self.aligner_selection, help='Selects the aligner to be used in the pipeline. Default "%s".' % self.aligner_selection)
         input_group.add_argument('--sv_caller-selection', dest="svcaller_selection",  metavar="svcaller_selection", default=self.svcaller_selection, help='Selects the SV caller to be used in the pipeline. Default "%s".' % self.svcaller_selection)
 
