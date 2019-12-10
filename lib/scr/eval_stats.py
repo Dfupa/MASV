@@ -62,6 +62,13 @@ if __name__ == "__main__":
         os.path.exists(calls_path)
     except IOerror:
         sys.exit(-1)
+        
+    #The iterator limitation can be surpressed if required
+    if iterator >= 10:
+        pass
+    else:
+        print("plot.py: error: argument --iterator: The iterator must surprass 10 to have an acceptable range")
+        sys.exit(-1)
 
     #We set the truth dataset path
     hq = os.path.abspath(hq_path)
