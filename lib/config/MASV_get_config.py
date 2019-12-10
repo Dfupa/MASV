@@ -302,9 +302,9 @@ class CreateConfigurationFile(object):
         if args.hq_vcf:
             args.hq_vcf = os.path.abspath(args.hq_vcf)
         else:
-            args.hq_vcf = working_dir + "truth_dataset/hq.sv.vcf.gz"
+            args.hq_vcf = working_dir + "truth_dataset/hq.sv.vcf"
         if not os.path.exists(args.hq_vcf):
-            print("The high confidence .vcf.gz has not been provided in the path "+args.hq_vcf+" . Note that the truvari evaluation will not be completed")
+            print("The high confidence .vcf/.bed has not been found in the provided path "+args.hq_vcf+" . Note that the evaluation will not be completed")
 
         if args.alignment_out:
             args.alignment_out = os.path.abspath(args.alignment_out) + "/"
