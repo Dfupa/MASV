@@ -18,8 +18,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import numpy as np
+from datetime import datetime
 import warnings
 warnings.filterwarnings('ignore')
+
+date1 = str(datetime.now())
+tmp = str.replace(date1," ",".") 
+tmp2 = str.replace(tmp,":","")
+date = str.replace(tmp2,"-","")
 
 if __name__ == "__main__":
 
@@ -62,8 +68,7 @@ if __name__ == "__main__":
         os.path.exists(calls_path)
     except IOerror:
         sys.exit(-1)
-        
-    #The iterator limitation can be surpressed if required
+
     if iterator >= 10:
         pass
     else:
@@ -106,12 +111,7 @@ if __name__ == "__main__":
         Reformat the svim vcf callset
         """
 
-        #command_svim_1 = 'cat ' + os.path.realpath(callset)+ ' | awk \'OFS="\\t" {{ if($1 ~ /^#/) {{print $0}}  }}\' > '+os.path.join(nwd, 'header.vcf')
-        #command_svim_2 = 'cat ' + os.path.realpath(callset)+ ' | awk \'OFS="\\t" {{ if($5=="'+featuretype+'") {{ print a $1, $2, $3, $4, $5, $6, $7, $8, $9, $10 }} }}\' > '+ os.path.join(nwd, 'variant.vcf')
-        #command_svim_3 = 'cat ' + os.path.join(nwd, 'header.vcf')+ ' ' + os.path.join(nwd, 'variant.vcf')+ ' > '+os.path.join(nwd, 'svim_reformated.vcf') 
-        #print(os.popen(command_svim_1).read(), os.popen(command_svim_2).read(), os.popen(command_svim_3).read())
-        #print("Everything went smoothly. Bye!\n")
-        #print(os.popen('rm *.tmp.vcf').read())      
+     
         command_svim_1 = 'cat ' + os.path.join(callset) + ' | awk \'OFS="\\t" {{ if($1 ~ /^#/) {{print $0}} else {{ if($5=="'+featuretype+'") {{ print $0 }} }}  }}\' > '+os.path.join(nwd, tempfile)
         print(os.popen(command_svim_1).read())
  
@@ -119,12 +119,12 @@ if __name__ == "__main__":
     def sniffles_reformat(callset, featuretype, tempfile = 'sniffles_reformated.vcf'):
         """
         Reformat the sniffles vcf callset
-        """    
+        """   
         if sniffles == True:
-
-            command_snif_1 = 'cat ' + os.path.abspath(callset) + ' | awk \'OFS="\\t" {{ if($1 ~ /^#/) {{ print $0 }} }}\' > '+os.path.join(nwd, 'header.tmp.vcf')
-            command_snif_2 = 'cat ' + os.path.abspath(callset) + ' | awk \'OFS="\\t" {{ if($1 !~ /^#/) {{print $0}} }}\' | grep \"' + featuretype + '\" > '+os.path.join(nwd, 'subset.tmp.vcf')
-            command_snif_3 = 'cat '+os.path.join(nwd, 'header.tmp.vcf')+' '+os.path.join(nwd, 'subset.temp.vcf')+' > '+os.path.join(nwd, tempfile)
+            print(os.path.join(callset))
+            command_snif_1 = 'cat ' + os.path.join(callset) + ' | awk \'OFS="\\t" {{ if($1 ~ /^#/) {{ print $0 }} }}\' > '+os.path.join('header.tmp.vcf')
+            command_snif_2 = 'cat ' + os.path.join(callset) + ' | awk \'OFS="\\t" {{ if($1 !~ /^#/) {{print $0}} }}\' | grep \"' + featuretype + '\" > '+os.path.join(nwd, 'subset.tmp.vcf')
+            command_snif_3 = 'cat '+os.path.join(nwd, 'header.tmp.vcf')+' '+os.path.join(nwd, 'subset.tmp.vcf')+' > '+os.path.join(nwd, tempfile)
             print(os.popen(command_snif_1).read(), os.popen(command_snif_2).read(), os.popen(command_snif_3).read())
             print(os.popen('rm *.tmp.vcf').read())
 
@@ -286,8 +286,14 @@ if __name__ == "__main__":
 
     #Reformat the feature name for sniffles based on the default example
     if sniffles == True:
+            dataset = "sniffles"
+            if feature == '<DUP:TANDEM>':
+                feature = '<DUP>'
+            else:
+                pass  
             feature = feature.replace("<", "")
             feature = feature.replace(">", "")
+            
             
             print("###############################")
             print("#Step 2: Reformatting the file#")
@@ -298,7 +304,7 @@ if __name__ == "__main__":
             print("Everything went smoothly.\n")                                                               
     #Reformat for svim                                                                       
     elif sniffles == False:
-        
+            dataset = "svim"
             print("###############################")
             print("#Step 2: Reformatting the file#")
             print("###############################\n")
@@ -321,8 +327,8 @@ if __name__ == "__main__":
         check_plot =plot_filtering(hq, new_call, feature, iterator)    
     except ValueError:
         sys.exit(-1)      
-    file = open('eval_stats.txt', 'w')
-    file.write("These are the results for the evaluation of "+os.path.basename(hq)+" truth dataset and "+os.path.basename(calls)+" callset dataset.\n")
+    file = open(str(date)+'_eval_stats_'+str(dataset)+'_'+str(feature)+'.txt', 'w')
+    file.write("These are the results for the evaluation of "+os.path.basename(hq)+" truth dataset and "+os.path.basename(calls)+" callset dataset for the specific feature "+str(feature)+".\n")
     file.write("\n")
     if plot == True:
         file.write("Note that the added columns 'Mean values' and 'Std values' stand for the mean and standard deviation of the iterative loop using a range of 0 to "+str(iterator)+" Q scores.\n")
@@ -335,5 +341,8 @@ if __name__ == "__main__":
     file.write("\n\nAnd it is done! Bye.\n")
     file.close()
     print("\nRemoving the temporary files, please wait ...\n")
-    print(os.popen('rm svim_reformated.vcf').read())
+    if sniffles == False:
+        print(os.popen('rm svim_reformated.vcf').read())
+    if sniffles == True:
+        print(os.popen('rm sniffles_reformated.vcf').read())
     print("And it is done! Bye.\n")
