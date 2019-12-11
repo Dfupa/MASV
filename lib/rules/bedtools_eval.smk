@@ -18,6 +18,8 @@ rule eval_stats:
     benchmark: 
         benchmark_dir + str(date) + ".{ontfile}.eval.benchmark.txt"
         
+    threads: 1
+        
     conda: "pipeline_env.yml"
         
     run:
