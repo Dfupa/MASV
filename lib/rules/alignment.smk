@@ -51,7 +51,7 @@ rule mapping:
         ref = config["Inputs"]["reference_genome"]
         
     output:
-        temp(workingdir + str(date) + "/{params.outdir}/{sample}_{input.aligner}.bam")
+        protected(workingdir + str(date) + "/{params.outdir}/{sample}_{input.aligner}.bam")
         
     params:
         mapping_tech_minimap, mapping_tech_ngmlr = which_tech(parameter=config["General Parameters"]["seq_technology"]),
