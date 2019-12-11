@@ -25,9 +25,7 @@ rule truvari_conversion_svim:
         logs_dir + str(date) + "truvari_svim_conversion.log"
     
     run:
-        if rules.sv_calling.input.svcaller == "svim"
-            #shell("cat {input} | sed 's/INS:NOVEL/INS/g' | sed 's/DUP:INT/INS/g' | sed 's/DUP:TANDEM/INS/g' | awk 'OFS=\"\\t\" {{ if($1 ~ /^#/) {{ print $0 }} else {{ if($5==\"<DEL>\" || $5==\"<INS>\") {{ print $1, $2, $3, $4, $5, $6, \"PASS\", $8, $9, $10 }} }} }}' > {output}")
-            #Works in shell but, shell("cat {input} | sed 's/INS:NOVEL/INS/g' | sed 's/DUP:INT/INS/g' | sed 's/DUP:TANDEM/INS/g' | awk 'OFS="\t" {{ if($1 ~ /^#/) {{ print $0 }} else {{ if($5=="<DEL>" || $5=="<INS>") {{ print $1, $2, $3, $4, $5, $6, "PASS", $8, $9, $10 }} }} }}' > {output}")
+        if rules.sv_calling.input.svcaller == "svim":
             shell("cat {input} | sed 's/INS:NOVEL/INS/g' | sed 's/DUP:INT/INS/g' | sed 's/DUP:TANDEM/INS/g' | awk 'OFS=\"\\t\" {{ if($1 ~ /^#/) {{ print $0 }} else {{ if($5==\"<DEL>\" || $5==\"<INS>\") {{ print $1, $2, $3, $4, $5, $6, \"PASS\", $8, $9, $10 }} }} }}' > {output} 2> {logs}"
         else:
             shell("echo 'As svim wasn't selected this step is aborted. Continuing.' 2> {logs}")
@@ -89,7 +87,7 @@ rule truvari_eval:
     I could add this new parameters into the config file. Working in progress till implementation"""
                   
     input:       
-        hq_vcf = 
+        hq_vcf = config["Inputs"]["hq_vcf"],
         genome = rules.mapping.input.ref
         
     output:
