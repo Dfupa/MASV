@@ -1,6 +1,6 @@
 ########ALPHA VERSION##########
 #Please, note that this code implementation is not yet 100% functional. It was scrapped for the main bulk of the project
-#but it can be adapted to work under the right circustamces. Right now it is not included in the include: rule of smk.
+#but it can be adapted to work under the right circustamces. Right now it is not included in the main snakemake pipeline.
 
 ##########The status of this rule.smk is WIP on hiatus ###############
 
@@ -107,9 +107,9 @@ rule truvari_eval:
         if rules.sv_calling.input.svcaller == "svim":
             shell("rm -rf {params.out_dir} && truvari -f {input.genome}\
                     -b {input.hq_vcf} -c rules.bgzip_tabix_svim.output -o {params.out_dir}\
-                    --passonly -r 1000 -p 0.00 2> {logs}")
+                    --passonly -r 500 -p 0.00 2> {logs}")
                   
         if rules.sv_calling.input.svcaller == "sniffles":
             shell("rm -rf {params.out_dir} && truvari -f {input.genome}\
                     -b {input.hq_vcf} -c rules.bgzip_tabix_sniffles.output -o {params.out_dir}\
-                    --passonly -r 1000 -p 0.00 2> {logs}")
+                    --passonly -r 500 -p 0.00 2> {logs}")
