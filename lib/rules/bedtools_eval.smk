@@ -6,13 +6,13 @@ import os
 
 rule eval_stats:
     input:
-        SVIM = rules.filter_svim.output
-        SNIFFLES = rules.sv_calling.output.VCF
+        SVIM = rules.filter_svim.output,
+        SNIFFLES = rules.sv_calling.output.VCF,
         truth = config["Inputs"]["hq_vcf"]
     log:
         logs_dir + str(date) +".{ontfile}.eval_stats_bedtools.log"
     params:
-        iterator = 10 + int(config["Svim"]["svim_mins_core"])
+        iterator = 10 + int(config["Svim"]["svim_mins_core"]),
         feature = ['<DEL>', '<INS>', '<INV>', '<DUP:TANDEM>'] #This can be edited manually to your needs
         
     benchmark: 
