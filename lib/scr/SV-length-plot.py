@@ -1,4 +1,4 @@
-#This code was developed by wdcoster https://github.com/wdecoster/nano-snakemake/blob/master/scripts/SV-length-plot.py
+#This code was originally developed by wdcoster https://github.com/wdecoster/nano-snakemake/blob/master/scripts/SV-length-plot.py
 
 #! /usr/bin/env python
 import sys
@@ -16,11 +16,11 @@ def main():
     for v in VCF(args.vcf):
         if not v.INFO.get('SVTYPE') == 'TRA':
             try:
-                if abs(v.INFO.get('SVLEN')) >= 50:
+                if abs(v.INFO.get('SVLEN')) >= args.length:
                     len_dict[v.INFO.get('SVTYPE')].append(abs(v.INFO.get('SVLEN')))
             except TypeError:
                 if v.INFO.get('SVTYPE') == 'INV':
-                    if (v.end - v.start) >= 50:
+                    if (v.end - v.start) >= args.length:
                         len_dict[v.INFO.get('SVTYPE')].append(v.end - v.start)
                         sys.stderr.write("SVLEN field missing. Inferred SV length from END and POS:\n{}\n\n".format(v))
                 else:
@@ -43,7 +43,7 @@ def make_plot(dict_of_lengths, output):
     Second bar chart is up to 20kb, with bins of 100bp
      and uses log scaling on the y-axis
     """
-    standard_order = ['DEL', 'INS', 'DUP', 'INV']
+    standard_order = ['DEL', 'INS', 'INV', 'DUP']
     if len(dict_of_lengths.keys()) > 0:
         spec_order = sorted([i for i in dict_of_lengths.keys() if i not in standard_order])
         sorter = standard_order + spec_order
@@ -54,8 +54,9 @@ def make_plot(dict_of_lengths, output):
         names = []
         lengths = []
     plt.subplot(2, 1, 1)
+    plt.title("Up to 3kb with bins of 10 bp")
     plt.hist(x=lengths,
-             bins=[i for i in range(0, 2000, 10)],
+             bins=[i for i in range(0, 3000, 10)],
              stacked=True,
              histtype='bar',
              label=names)
@@ -65,8 +66,9 @@ def make_plot(dict_of_lengths, output):
                fontsize="small")
 
     plt.subplot(2, 1, 2)
+    plt.title("Up to 30kb with bins of 100 bp")
     plt.hist(x=lengths,
-             bins=[i for i in range(0, 20000, 100)],
+             bins=[i for i in range(0, 30000, 100)],
              stacked=True,
              histtype='bar',
              label=names,
@@ -88,6 +90,10 @@ def get_args():
     parser.add_argument("-c", "--counts",
                         help="output file to write counts to",
                         default="SV-length.txt")
+    parser.add_argument("-l", "--length",
+                        type = int,
+                        help="Minimum SV length to be classified as such. Default is 50 bp.",
+                        default = 50)
     return parser.parse_args()
 
 
