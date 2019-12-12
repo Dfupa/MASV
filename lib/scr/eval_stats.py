@@ -2,10 +2,11 @@
 
 #Author: Diego Fuentes
 #Contact email: diegofupa@gmail.com
-#Date:2019-12-01
 
 """
-Uses pybedtools to calculate the Recall and Precision of the benchmarking
+Uses bedtools intersect from a conda environment with access to shell language to calculate the Recall and Precision of the benchmarking.
+Author: Diego Fuentes
+Contact email: diegofupa@gmail.com
 """
 from __future__ import print_function
 
@@ -27,33 +28,16 @@ tmp = str.replace(date1," ",".")
 tmp2 = str.replace(tmp,":","")
 date = str.replace(tmp2,"-","")
 
-if __name__ == "__main__":
 
-    ap = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
-                                 usage=__doc__)
-    ap.add_argument('--truth', required=True,
-                    help='VCF/BED high confidence ("truth") dataset')
-    ap.add_argument('--callset', required=True,
-                    help='VCF/BED with the prediction callset')
-    ap.add_argument('--svtype', default='<DEL>', type=str,
-                    help='Define the feature type to filter. '
-                         'Default is <DEL>')
-    ap.add_argument('--processes', default=1, type=int,
-                    help='Number of processes to use in parallel.')
-    ap.add_argument('--sniffles', type=bool, default=False,
-                   help='Parameter used to reformat the sniffles callset if provided. Default is \'False\'.')
-    ap.add_argument('--plot', type=bool, default=False,
-                   help='Parameter used to produce a plot of the eval metrics for different svim score filtering. Default is \'False\'.')
-    ap.add_argument('--iterator', type=int, default=20,
-                   help='Parameter used in the plotting step. It is the max svim filtering score range indicated from 0 to \'--iterator\'. Default is \'20\'.')
-    ap.add_argument('-v', '--verbose', action='store_true',
-                    help='Verbose (goes to stderr)')
-    args = ap.parse_args()
+def main():
 
+    args = get_args()
     hq_path = args.truth
     calls_path = args.callset
     feature = args.svtype
+    global sniffles
     sniffles = args.sniffles
+    global plot
     plot = args.plot
     iterator = args.iterator
 
@@ -62,17 +46,18 @@ if __name__ == "__main__":
     try:
         os.path.exists(hq_path)
     except IOerror:
+        sys.stderr.write("eval_stats.py: error: The truth dataset path provided does not exist")
         sys.exit(-1)
-    
     try:
         os.path.exists(calls_path)
     except IOerror:
+        sys.stderr.write("eval_stats.py: error: The variant call dataset path provided does not exist")
         sys.exit(-1)
 
     if iterator >= 10:
         pass
     else:
-        print("plot.py: error: argument --iterator: The iterator must surprass 10 to have an acceptable range")
+        sys.stderr.write("eval_stats.py: error: argument --iterator: The iterator must surprass 10 to have an acceptable range")
         sys.exit(-1)
 
     #We set the truth dataset path
@@ -84,6 +69,7 @@ if __name__ == "__main__":
     print("#Step 1: cwd#")
     print("#############\n")
     owd = os.getcwd()
+    global nwd
     nwd = os.path.dirname(os.path.abspath(calls_path))
     
     if owd == nwd:
@@ -97,26 +83,99 @@ if __name__ == "__main__":
     #Provide only the file name for the callset
     calls = os.path.basename(os.path.abspath(calls_path))
 
+        #Reformat the feature name for sniffles based on the default example
+    if sniffles == True:
+            dataset = "sniffles"
+  
+            feature = feature.replace("<", "")
+            feature = feature.replace(">", "")
             
-    
+            
+            print("###############################")
+            print("#Step 2: Reformatting the file#")
+            print("###############################\n")
+            
+            try:
+                reformat = sniffles_reformat(calls, feature)
+                new_call = os.path.realpath('sniffles_reformated.vcf')
+           
+            except ValueError:
+                sys.exit(-1)
+                                                               
+    #Reformat for svim                                                                       
+    elif sniffles == False:
+            dataset = "svim"
+            if feature == '<DUP>':
+                feature = '<DUP:TANDEM>'
 
-    if args.processes > 3:
-        print(
-            "Only need 3 processes, resetting processes from {0} to 3".format(args.processes)
-        )
-        args.processes = 3
+            print("###############################")
+            print("#Step 2: Reformatting the file#")
+            print("###############################\n")
+            
+            try:
+                reformat = svim_reformat(calls, feature)
+                new_call = os.path.realpath('svim_reformated.vcf')
+                
+            except ValueError:
+                sys.exit(-1)
+            
+    print("Everything went smoothly.\n")        
+    print("############################################")
+    print("#Step 3: Obtaining the precision and recall#")                                                                  
+    print("############################################\n")                                                                       
+    try:
+        results = recall_precision_stats(hq, new_call)
+    except ValueError:
+        sys.exit(-1)
+    print("Everything went smoothly.\n")
+    #This is an optional step, if the conditions are met, will produce a plot
+    try:
+        check_plot =plot_filtering(hq, new_call, feature, iterator)    
+    except PlotError:
+        sys.exit(-1)
+
+    #Create a eval_stats.txt file      
+    file = open(str(date)+'_eval_stats_'+str(dataset)+'_'+str(feature)+'.txt', 'w')
+    file.write("These are the results for the evaluation of "+os.path.basename(hq)+" truth dataset and "+os.path.basename(calls)+" callset dataset for the specific feature "+str(feature)+".\n")
+    file.write("\n")
+    if plot == True:
+        file.write("Note that the added columns 'Mean values' and 'Std values' stand for the mean and standard deviation of the iterative loop using a range of 0 to "+str(iterator)+" Q scores.\n")
+        results.insert(loc=2, column='Mean values', value=[check_plot[0],check_plot[1], check_plot[2]])
+        results.insert(loc=3, column='Std values', value=[check_plot[3],check_plot[4], check_plot[5]])
+        file.write("\n")
+        file.write(results.to_string(index=False))
+    else:
+        file.write(results.to_string(index=False))
+    file.write("\n\nAnd it is done! Bye.\n")
+    file.close()
+    print("\nRemoving the temporary files, please wait ...\n")
+
+    if sniffles == False:
+        print(os.popen('rm svim_reformated.vcf').read())
+    if sniffles == True:
+        print(os.popen('rm sniffles_reformated.vcf').read())
+    print("And it is done! Bye.\n")        
+    
         
-    def svim_reformat(callset, featuretype, tempfile = 'svim_reformated.vcf'):
+def svim_reformat(callset, featuretype, tempfile = 'svim_reformated.vcf'):
         """
         Reformat the svim vcf callset
         """
+        if sniffles == False:
+             command_svim_1 = 'cat ' + os.path.join(callset) + ' | awk \'OFS="\\t" {{ if($1 ~ /^#/) {{print $0}} else {{ if($5=="'+featuretype+'") {{ print $0 }} }}  }}\' > '+ \
+             os.path.join(nwd, tempfile)
+             print(os.popen(command_svim_1).read())
 
-     
-        command_svim_1 = 'cat ' + os.path.join(callset) + ' | awk \'OFS="\\t" {{ if($1 ~ /^#/) {{print $0}} else {{ if($5=="'+featuretype+'") {{ print $0 }} }}  }}\' > '+os.path.join(nwd, tempfile)
-        print(os.popen(command_svim_1).read())
+             if os.path.exists(os.path.realpath('svim_reformated.vcf')):
+                 return True
+             else:
+                 print("eval_stats.py: error: The svim_reformat step didn't work")
+                 sys.exit(-1)
+        else:
+             pass
  
     
-    def sniffles_reformat(callset, featuretype, tempfile = 'sniffles_reformated.vcf'):
+def sniffles_reformat(callset, featuretype, tempfile = 'sniffles_reformated.vcf'):
         """
         Reformat the sniffles vcf callset
         """   
@@ -128,7 +187,15 @@ if __name__ == "__main__":
             print(os.popen(command_snif_1).read(), os.popen(command_snif_2).read(), os.popen(command_snif_3).read())
             print(os.popen('rm *.tmp.vcf').read())
 
-    def recall_precision_stats(truth, callset):
+            if os.path.exists(os.path.realpath('sniffles_reformated.vcf')):
+                return True
+            else:
+                print("eval_stats.py: error: The sniffles_reformat step didn't work")
+                sys.exit(-1)
+        else:
+            pass
+
+def recall_precision_stats(truth, callset):
         """
         Returns a table with the arithmetic 
         """
@@ -164,7 +231,7 @@ if __name__ == "__main__":
         
         return df
     
-    def plot_filtering(truth, callset, featuretype, iterations=20):
+def plot_filtering(truth, callset, featuretype, iterations=20):
                                                                            
         
         performance_matrix = np.zeros((iterations,3))
@@ -284,65 +351,28 @@ if __name__ == "__main__":
         else:
             pass
 
-    #Reformat the feature name for sniffles based on the default example
-    if sniffles == True:
-            dataset = "sniffles"
-            if feature == '<DUP:TANDEM>':
-                feature = '<DUP>'
-            else:
-                pass  
-            feature = feature.replace("<", "")
-            feature = feature.replace(">", "")
-            
-            
-            print("###############################")
-            print("#Step 2: Reformatting the file#")
-            print("###############################\n")
-            
-            reformat = sniffles_reformat(calls, feature)
-            new_call = os.path.realpath('sniffles_reformated.vcf')
-            print("Everything went smoothly.\n")                                                               
-    #Reformat for svim                                                                       
-    elif sniffles == False:
-            dataset = "svim"
-            print("###############################")
-            print("#Step 2: Reformatting the file#")
-            print("###############################\n")
-            
-            reformat = svim_reformat(calls, feature)
-            new_call = os.path.realpath('svim_reformated.vcf')
-            print("Everything went smoothly.\n")
-            
-            
-    print("############################################")
-    print("#Step 3: Obtaining the precision and recall#")                                                                  
-    print("############################################\n")                                                                       
-    try:
-        results = recall_precision_stats(hq, new_call)
-    except ValueError:
-        sys.exit(-1)
-    print("Everything went smoothly.\n")
-    #This is an optional step, if the conditions are met, will produce a plot
-    try:
-        check_plot =plot_filtering(hq, new_call, feature, iterator)    
-    except ValueError:
-        sys.exit(-1)      
-    file = open(str(date)+'_eval_stats_'+str(dataset)+'_'+str(feature)+'.txt', 'w')
-    file.write("These are the results for the evaluation of "+os.path.basename(hq)+" truth dataset and "+os.path.basename(calls)+" callset dataset for the specific feature "+str(feature)+".\n")
-    file.write("\n")
-    if plot == True:
-        file.write("Note that the added columns 'Mean values' and 'Std values' stand for the mean and standard deviation of the iterative loop using a range of 0 to "+str(iterator)+" Q scores.\n")
-        results.insert(loc=2, column='Mean values', value=[check_plot[0],check_plot[1], check_plot[2]])
-        results.insert(loc=3, column='Std values', value=[check_plot[3],check_plot[4], check_plot[5]])
-        file.write("\n")
-        file.write(results.to_string(index=False))
-    else:
-        file.write(results.to_string(index=False))
-    file.write("\n\nAnd it is done! Bye.\n")
-    file.close()
-    print("\nRemoving the temporary files, please wait ...\n")
-    if sniffles == False:
-        print(os.popen('rm svim_reformated.vcf').read())
-    if sniffles == True:
-        print(os.popen('rm sniffles_reformated.vcf').read())
-    print("And it is done! Bye.\n")
+
+
+def get_args():
+
+    parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
+                                 usage=__doc__)
+    parser.add_argument('-t', '--truth', required=True,
+                    help='VCF/BED high confidence ("truth") dataset')
+    parser.add_argument('-c', '--callset', required=True,
+                    help='VCF/BED with the prediction callset')
+    parser.add_argument('-sv', '--svtype', default='<DEL>', type=str,
+                    help='Define the feature type to filter. '
+                         'Default is <DEL>')
+    parser.add_argument('-s', '--sniffles', type=bool, default=False,
+                   help='Parameter used to reformat the sniffles callset if provided. Default is \'False\'.')
+    parser.add_argument('-p', '--plot', type=bool, default=False,
+                   help='Parameter used to produce a plot of the eval metrics for different svim score filtering. Default is \'False\'.')
+    parser.add_argument('-i', '--iterator', type=int, default=20,
+                   help='Parameter used in the plotting step. It is the max svim filtering score range indicated from 0 to \'--iterator\'. Default is \'20\'.')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                    help='Verbose (goes to stderr)')
+    return parser.parse_args()
+
+if __name__ == '__main__':
+    main()
