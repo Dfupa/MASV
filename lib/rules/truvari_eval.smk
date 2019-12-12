@@ -61,7 +61,7 @@ rule bgzip_tabix_sniffles:
     input:
         rules.sort_calls_sniffles.output
     output:
-        rules.sv_calling.output.outDIR + "{sample}_{input.svcaller}.sorted.vcf.gz"
+        protected(rules.sv_calling.output.outDIR + "{sample}_{input.svcaller}.sorted.vcf.gz")
                   
     logs:
         logs_dir + str(date) + ".{ontfile}.bgzip_tabix_sniffles.log"
@@ -74,7 +74,7 @@ rule bgzip_tabix_svim:
     input:
         rules.sort_calls_svim.output
     output:
-        rules.sv_calling.output.outDIR + "minscore_{rules.filter_svim.params.minscore,[0-9]+}.truvari.sorted.vcf.gz"
+        protected(rules.sv_calling.output.outDIR + "minscore_{rules.filter_svim.params.minscore,[0-9]+}.truvari.sorted.vcf.gz")
     logs:
         logs_dir + str(date) + ".{ontfile}.bgzip_tabix_sniffles.log"
     shell:
@@ -91,7 +91,7 @@ rule truvari_eval:
         genome = rules.mapping.input.ref
         
     output:
-        workingdir + str(date) + params.outdir
+        directory(workingdir + str(date) + params.outdir)
                   
     params:
         outdir = workingdir + str(date) + "/{rules.params.outdir}/truvari_eval
