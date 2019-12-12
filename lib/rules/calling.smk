@@ -8,8 +8,8 @@ rule sv_calling:
         svcaller = config["Inputs"]["svcaller_selection"],
         ref = config["Inputs"]["reference_genome"]
     output:
-        VCF = workingdir + str(date) + "/{params.outdir}/{sample}_{input.svcaller}.vcf",
-        outDIR = workingdir + str(date) + "/{params.outdir}/)
+        VCF = protected(workingdir + str(date) + "/{params.outdir}/{sample}_{input.svcaller}.vcf"),
+        outDIR = directory(workingdir + str(date) + "/{params.outdir}/")
     params:
         outdir = directory (config["Outputs"]["sv_call_out"]),
         min_sv_length_sniffles = config["Sniffles"]["sniffles_min_sv_length"],
@@ -67,7 +67,7 @@ rule filter_svim:
         rules.sv_calling.output.outDIR + "final_results.vcf"
         
     output:
-        rules.sv_calling.output.outDIR + "minscore_{params.minscore,[0-9]+}.vcf" #Note that a numeric constraint is added
+        protected(rules.sv_calling.output.outDIR + "minscore_{params.minscore,[0-9]+}.vcf") #Note that a numeric constraint is added
     
     threads: 1
     
