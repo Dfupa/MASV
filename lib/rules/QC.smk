@@ -32,7 +32,7 @@ rule mosdepth_global_plot:
     input:
         "{rules.mapping.input.aligner}/mosdepth/{sample}.mosdepth.global.dist.txt"
     output:
-        "{rules.mapping.input.aligner}/mosdepth_global_plot/global.html"
+        protected("{rules.mapping.input.aligner}/mosdepth_global_plot/global.html")
     log:
         "logs/{rules.mapping.input.aligner}/mosdepth/mosdepth_global_plot.log"
         
