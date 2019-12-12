@@ -9,6 +9,8 @@ rule eval_stats:
         SVIM = rules.filter_svim.output,
         SNIFFLES = rules.sv_calling.output.VCF,
         truth = config["Inputs"]["hq_vcf"]
+    output:
+        protected(str(date) + "_eval_stats_" + str(rules.sv_calling.input.svcaller)+"_feature.txt"
     log:
         logs_dir + str(date) +".{ontfile}.eval_stats_bedtools.log"
     params:
@@ -28,6 +30,7 @@ rule eval_stats:
                 shell("python3 " + os.path.join(workflow.basedir, "lib/scr/eval_stats.py") + \
                     "--truth {input.truth} --callset {input.SVIM} --plot True --svtype " + \
                      str(sv) + " --iterator {params.iterator} 2> {log}")
+                     
         if rules.sv_calling.input.svcaller == "sniffles":
             for sv in params.feature:
                 shell("python3 " + os.path.join(workflow.basedir, "lib/scr/eval_stats.py") + \
