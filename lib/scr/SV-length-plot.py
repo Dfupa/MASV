@@ -56,7 +56,7 @@ def make_plot(dict_of_lengths, output):
     plt.subplot(2, 1, 1)
     plt.title("Up to 3kb with bins of 10 bp")
     plt.hist(x=lengths,
-             bins=[i for i in range(0, 3000, 10)],
+             bins=[i for i in range(args.length, 3000, 10)],
              stacked=True,
              histtype='bar',
              label=names)
@@ -68,7 +68,7 @@ def make_plot(dict_of_lengths, output):
     plt.subplot(2, 1, 2)
     plt.title("Up to 30kb with bins of 100 bp")
     plt.hist(x=lengths,
-             bins=[i for i in range(0, 30000, 100)],
+             bins=[i for i in range(args.length, 30000, 100)],
              stacked=True,
              histtype='bar',
              label=names,
