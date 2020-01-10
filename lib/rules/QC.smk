@@ -19,7 +19,7 @@ rule mosdepth_get:
     benchmark:
         benchmark_dir + str(date) + ".{sample}.mosdepth.benchmark.txt"
         
-    conda: "pipeline_env.yml"
+    conda: "MASV_pipeline.yml"
     
     shell:
         "mkdir {rules.mapping.input.aligner}/mosdepth && \
@@ -36,7 +36,7 @@ rule mosdepth_global_plot:
     log:
         "logs/{rules.mapping.input.aligner}/mosdepth/mosdepth_global_plot.log"
         
-    conda: "pipeline_env.yml"
+    conda: "MASV_pipeline.yml"
     
     shell:
         "python3 " + os.path.join(workflow.basedir, "lib/scr/mosdepth-plot-dist.py") + \
@@ -56,7 +56,7 @@ rule nanoplot_qc:
         
     threads: config["Minimap2"]["minimap2_cores"]
     
-    conda: "pipeline_env.yml"
+    conda: "MASV_pipeline.yml"
     
     shell:
         "NanoPlot -t {threads} --bam {input.BAM} --raw -o {output.DIR} -p {params.sample}_ --N50 --title {params.title}"
