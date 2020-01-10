@@ -19,7 +19,7 @@ rule truvari_conversion_svim:
     
     threads: 1
     
-    conda: "pipeline_env.yml"
+    conda: "MASV_pipeline.yml"
         
     logs:
         logs_dir + str(date) + "truvari_svim_conversion.log"
@@ -38,6 +38,8 @@ rule sort_calls_sniffles:
         
     threads: 1
     
+    conda: "MASV_pipeline.yml"
+    
     logs:
         logs_dir + str(date) + ".{ontfile}.vcf_sorting.log"
     run:
@@ -52,8 +54,12 @@ rule sort_calls_svim:
     output:
         temp(rules.sv_calling.output.outDIR + "minscore_{rules.filter_svim.params.minscore,[0-9]+}.truvari.sorted.vcf")
     threads: 1
+    
+    conda: "MASV_pipeline.yml"
+    
     logs:
         logs_dir + str(date) + "sorting_svim_minscore_{rules.filter_svim.params.minscore,[0-9]+}.truvari.log"
+    
     shell:
         "bcftools sort {input} > {output} 2> {logs}"
 
@@ -62,6 +68,8 @@ rule bgzip_tabix_sniffles:
         rules.sort_calls_sniffles.output
     output:
         protected(rules.sv_calling.output.outDIR + "{sample}_{input.svcaller}.sorted.vcf.gz")
+        
+    conda: "MASV_pipeline.yml"
                   
     logs:
         logs_dir + str(date) + ".{ontfile}.bgzip_tabix_sniffles.log"
@@ -75,6 +83,9 @@ rule bgzip_tabix_svim:
         rules.sort_calls_svim.output
     output:
         protected(rules.sv_calling.output.outDIR + "minscore_{rules.filter_svim.params.minscore,[0-9]+}.truvari.sorted.vcf.gz")
+    
+    conda: "MASV_pipeline.yml"
+    
     logs:
         logs_dir + str(date) + ".{ontfile}.bgzip_tabix_sniffles.log"
     shell:
@@ -96,7 +107,9 @@ rule truvari_eval:
     params:
         outdir = workingdir + str(date) + "/{rules.params.outdir}/truvari_eval
     
-    logs:
+    conda: "MASV_pipeline.yml"
+    
+    logs: logs_dir + str(date) + ".{ontfile}.truvari_eval.log
                   
     benchmark:
         benchmark_dir + str(date) + ".{ontfile}.truvari_eval.benchmark.txt"
