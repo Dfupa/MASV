@@ -22,7 +22,7 @@ rule eval_stats:
         
     threads: 1
         
-    conda: "pipeline_env.yml"
+    conda: "MASV_pipeline.yml"
         
     run:
         if rules.sv_calling.input.svcaller == "svim":
