@@ -27,7 +27,7 @@ rule index_minimap2:
 	output:
 		workingdir + "/index/minimap2.idx"
 	threads: config["Minimap2 parameters"]["minimap2_cores"]
-	conda: "pipeline_env.yml"
+	conda: "MASV_pipeline.yml"
 
 	shell:
 			""minimap2 -t {threads} -ax map-ont -Y {input.ref} -d {output}"
