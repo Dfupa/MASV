@@ -79,7 +79,7 @@ rule mapping:
         minimap2_threads = config["Minimap2"]["minimap2_cores"],
         ngmlr_threads = config["Ngmlr"]["ngmlr_cores"]
 
-    conda: "pipeline_env.yml"
+    conda: "MASV_pipeline.yml"
   
     run:
         if aligner == "minimap2":   #If the selected aligner is minimap2
@@ -112,7 +112,7 @@ rule index_bam:
     threads:
         config["Minimap2"]["minimap2_cores"]
     
-    conda: "pipeline_env.yml"
+    conda: "MASV_pipeline.yml"
         
     shell:
         "samtools index -@ {threads} {input.BAM} {output.BAI} 2> {logs}"
@@ -126,7 +126,7 @@ rule alignment_stats:
     logs:
         logs_dir + str(date) +".{ontfile}.alignment_stats.log"
         
-    conda: "pipeline_env.yml"
+    conda: "MASV_pipeline.yml"
         
     shell:
         "python3 " + os.path.join(workflow.basedir, "lib/scr/alignment_stats.py") + \
