@@ -42,7 +42,7 @@ rule sv_calling:
     
     benchmark: benchmark_dir + str(date) + ".{ontfile}.sv.caller.benchmark.txt"
         
-    conda: "pipeline_env.yml"
+    conda: "MASV_pipeline.yml"
         
     run:
         if svcaller == "sniffles":    #If the selected caller is sniffles
@@ -77,7 +77,7 @@ rule filter_svim:
    logs:
         logs_dir + str(date) + ".{ontfile}.svim_filtering.log"
             
-    conda: "pipeline_env.yml"
+    conda: "MASV_pipeline.yml"
         
     run:
         if rules.sv_calling.input.svcaller == "svim"
