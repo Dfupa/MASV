@@ -10,7 +10,7 @@ rule eval_stats:
         SNIFFLES = rules.sv_calling.output.VCF,
         truth = config["Inputs"]["hq_vcf"]
     output:
-        protected(str(date) + "_eval_stats_" + str(rules.sv_calling.input.svcaller)+"_feature.txt"
+        protected(str(date) + "_eval_stats_{rules.sv_calling.input.svcaller}_feature.txt"
     log:
         logs_dir + str(date) +".{ontfile}.eval_stats_bedtools.log"
     params:
