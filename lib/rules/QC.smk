@@ -8,8 +8,8 @@ rule mosdepth_get:
         BAI = rules.index_bam.output.BAI
     threads: 4
     output:
-        protected("{rules.mapping.input.aligner}/mosdepth/{sample}.mosdepth.global.dist.txt"),
-        protected("{rules.mapping.input.aligner}/mosdepth/{sample}.regions.bed.gz"),
+        protected(workingdir + str(date) + "/{rules.mapping.params.outdir}/mosdepth/{sample}.mosdepth.global.dist.txt"),
+        protected(workingdir + str(date) + "/{rules.mapping.params.outdir}/mosdepth/{sample}.regions.bed.gz"),
     params:
         windowsize = 500,
         prefix = "{sample}",
@@ -30,11 +30,11 @@ rule mosdepth_get:
 
 rule mosdepth_global_plot:
     input:
-        "{rules.mapping.input.aligner}/mosdepth/{sample}.mosdepth.global.dist.txt"
+        workingdir + str(date) + "/{rules.mapping.params.outdir}/mosdepth/{sample}.mosdepth.global.dist.txt"
     output:
-        protected("{rules.mapping.input.aligner}/mosdepth_global_plot/global.html")
+        protected(workingdir + str(date) + "/{params.outdir}/mosdepth_global_plot/global.html")
     log:
-        "logs/{rules.mapping.input.aligner}/mosdepth/mosdepth_global_plot.log"
+        logs_dir + str(date) +".{sample}_mosdepth_global_plot.log"
         
     conda: "MASV_pipeline.yml"
     
@@ -49,7 +49,7 @@ rule nanoplot_qc:
     input:
         BAM = rules.mapping.output
     output:
-        DIR = directory("{rules.mapping.input.aligner}/nanoplot-qc")
+        DIR = directory((workingdir + str(date) + "/{rules.mapping.params.outdir}/nanoplot-qc")
     params:
         sample = {sample}
         title = str(date) + "_{sample}"
