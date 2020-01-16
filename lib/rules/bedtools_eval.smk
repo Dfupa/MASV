@@ -52,7 +52,7 @@ rule eval_stats_sniffles:
     conda: "MASV_pipeline.yml"
         
     run:
-       for sv in params.feature:
+       for sv in feature:
            shell("python3 " + os.path.join(workflow.basedir, "lib/scr/eval_stats.py") + \
            "--truth {input.truth} --callset {input.SVIM} --plot True --svtype " + \
            str(sv) + " --iterator {params.iterator} 2> {log}")
