@@ -27,7 +27,6 @@ class CreateConfigurationFile(object):
         self.sample_barcode = None                           #Sample barcode 
         self.basedir = self.sample_barcode                   #Base directory for the pipeline run
         self.seq_technology = "nanopore"                     #Sequencing technology
-        self.single = False                                  #Parameter that is going to be used for the helper function
 
         #INPUT PARAMETERS
 
@@ -35,7 +34,6 @@ class CreateConfigurationFile(object):
         self.reference_genome = None             #Reference genome provided in .fa or .fa.gz format
         self.hq_vcf = None                       #Provided high confidence .vcf/.bed for eval_stats.py. It can be used to provide a .vcf.gz for truvari evaluation (Alpha)
         self.aligner_selection = "minimap2"      #Default aligner
-        self.svcaller_selection = "svim"         #Default sv caller
 
 
         #OUTPUT PARAMETERS
@@ -136,7 +134,6 @@ class CreateConfigurationFile(object):
         general_group.add_argument('--logs-dir', dest="logs_dir", metavar="logs_dir", help='Directory to keep all the log files. Default sample_barcode id.')
         general_group.add_argument('--sample-barcode', dest="sample_barcode", metavar="sample_barcode", help='Sample barcode. Default %s.' % self.sample_barcode)
         general_group.add_argument('--basedir', dest="basedir", metavar="basedir", help='Base directory for the pipeline run. Default %s.' % self.basedir)
-        general_group.add_argument('--single', dest="single", type=bool, default=self.single, help='Parameter used for the helper function find_files. Default %s.' % self.single)
         general_group.add_argument('--sequencing-technology', type=str, dest="seq_technology", metavar="seq_technology", default=self.seq_technology, help='Parameter used for determining the sequencing technology ("nanopore" or "pacbio"). Default %s.' % self.seq_technology)
 
     def register_input(self, parser):
@@ -150,9 +147,7 @@ class CreateConfigurationFile(object):
         input_group.add_argument('--reference-genome', dest="reference_genome", metavar="reference_genome", help='Reference genome provided in .fa or .fa.gz format. Your path is  %s.' % self.reference_genome)
         input_group.add_argument('--hq-vcf', dest="hq_vcf", metavar="hq_vcf", help='Provided high confidence .vcf/.bed for eval_stats.py. It can be used to provide a .vcf.gz for truvari evaluation (Alpha). Your path is  %s.' % self.hq_vcf) 
         input_group.add_argument('--aligner-selection', dest="aligner_selection", metavar="aligner_selection", default=self.aligner_selection, help='Selects the aligner to be used in the pipeline. Default "%s".' % self.aligner_selection)
-        input_group.add_argument('--sv_caller-selection', dest="svcaller_selection",  metavar="svcaller_selection", default=self.svcaller_selection, help='Selects the SV caller to be used in the pipeline. Default "%s".' % self.svcaller_selection)
-
-
+        
     
     def register_output(self, parser):
         """Register all output parameters with the given
@@ -341,7 +336,6 @@ class CreateConfigurationFile(object):
         self.generalParameters["basedir"] = args.basedir
         self.generalParameters["logs_dir"] = args.logs_dir
         self.generalParameters["sample_barcode"] = args.sample_barcode
-        self.generalParameters["single"] = args.single
         self.generalParameters["seq_technology"] = args.seq_technology
         self.allParameters["Parameters"] = self.generalParameters
 
@@ -352,7 +346,6 @@ class CreateConfigurationFile(object):
         """
 
         self.inputParameters["aligner_selection"] = args.aligner_selection
-        self.inputParameters["svcaller_selection"] = args.svcaller_selection
         self.inputParameters["ONT_reads_directory"] = args.ONT_reads_directory
         self.inputParameters["reference_genome"] = args.reference_genome
         self.inputParameters["hq_vcf"] = args.hq_vcf
