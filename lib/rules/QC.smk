@@ -22,10 +22,8 @@ rule mosdepth_get:
     conda: "MASV_pipeline.yml"
     
     shell:
-        "mkdir "+aligner+"/mosdepth && \
-                mosdepth --threads {threads} -n \
-                  --by {params.windowsize} \
-                  {params.dir}mosdepth/{params.prefix} {input.BAM} 2> {log}"
+        "mkdir "+aligner+"/mosdepth && mosdepth --threads {threads} -n \
+        --by {params.windowsize} {params.dir}mosdepth/{params.prefix} {input.BAM} 2> {log}"
 
 
 rule mosdepth_global_plot:
@@ -40,7 +38,7 @@ rule mosdepth_global_plot:
     
     shell:
         "python3 " + os.path.join(workflow.basedir, "lib/scr/mosdepth-plot-dist.py") + \
-            " {input.plot} -o {output} 2> {log}"
+        " {input.plot} -o {output} 2> {log}"
             
             
 #####NANOPLOT####
