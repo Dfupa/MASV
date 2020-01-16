@@ -29,9 +29,9 @@ pipeline_version = "v" + str(config["Parameters"]["version"])
 workingdir = config["Parameters"]["basedir"]
 outdir = config["Outputs"]["alignment_out"]
 svout = config["Outputs"]["svcall_out"]
-#aligner = config["Inputs"]["aligner_selection"]
-svcaller = config["Inputs"]["svcaller_selection"]
-aligner = "ngmlr"
+aligner = config["Inputs"]["aligner_selection"]
+
+
 
 #Benchmark directory
 benchmark_dir = workingdir + "Benchmark/"
@@ -76,8 +76,8 @@ rule all:
         ontfile=ontfiles.split(',')),
         nanoplot=expand(outdir + str(date) + "_" + sample + ".{ontfile}_nanoplot-qc/",
         ontfile=ontfiles.split(',')),
-        vcf = expand(svout+"/"+str(date)+"_"+sample+"_"+svcaller+".{ontfile}.vcf", ontfile=ontfiles.split(',')),
-        svim = expand(svout+"/"+str(date)+"_"+sample+"_"+svcaller+".{ontfile}/{ontfile}_minscore_{minscore}.vcf",
+        sniffles = expand(svout+"/"+str(date)+"_"+sample+"_sniffles.{ontfile}.vcf", ontfile=ontfiles.split(',')),
+        svim = expand(svout+"/"+str(date)+"_"+sample+"_svim.{ontfile}/{ontfile}_minscore_{minscore}.vcf",
         ontfile=ontfiles.split(','),
         minscore=config["Svim"]["svim_min_score"])
 
