@@ -10,15 +10,15 @@ rule eval_stats:
         SNIFFLES = rules.sv_calling.output.VCF,
         truth = config["Inputs"]["hq_vcf"]
     output:
-        protected(str(date) + "_eval_stats_{rules.sv_calling.input.svcaller}_feature.txt"
+        protected(workingdir + str(date) + "_" + sample + ".{ontfile}_eval_stats_{rules.sv_calling.input.svcaller}_feature.txt")
     log:
-        logs_dir + str(date) +".{ontfile}.eval_stats_bedtools.log"
+        logs_dir + str(date) + "_" + sample + ".{ontfile}.eval_stats_bedtools.log"
     params:
-        iterator = 10 + int(config["Svim"]["svim_mins_core"]),
+        iterator = 10 + int(config["Svim"]["svim_min_score"]),
         feature = ['<DEL>', '<INS>', '<INV>', '<DUP:TANDEM>'] #This can be edited manually to your needs
         
     benchmark: 
-        benchmark_dir + str(date) + ".{ontfile}.eval.benchmark.txt"
+        benchmark_dir + str(date) + "_" + sample + ".{ontfile}.eval.benchmark.txt"
         
     threads: 1
         

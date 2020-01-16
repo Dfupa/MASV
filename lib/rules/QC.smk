@@ -4,59 +4,59 @@
 
 rule mosdepth_get:
     input:
-        BAM = rules.mapping.output,
-        BAI = rules.index_bam.output.BAI
+        BAM = lambda wildcards: expand(rules.mapping.output, ontfile=ontfiles.split(',')),
+        BAI = lambda wildcards: expand(rules.index_bam.output.BAI, ontfile=ontfiles.split(','))
     threads: 4
     output:
-        protected(workingdir + str(date) + "/{rules.mapping.params.outdir}/mosdepth/{sample}.mosdepth.global.dist.txt"),
-        protected(workingdir + str(date) + "/{rules.mapping.params.outdir}/mosdepth/{sample}.regions.bed.gz"),
+        txt=protected(outdir+"mosdepth/"+ sample + "_" + aligner+ ".{ontfile}.mosdepth.global.dist.txt"),
+        bed=protected(outdir+"mosdepth/"+ sample + "_" + aligner+ ".{ontfile}.regions.bed.gz")
     params:
         windowsize = 500,
-        prefix = "{sample}",
-        aligner = "{rules.mapping.input.aligner}"
+        prefix = sample,
+        dir = outdir
     log:
-        logs_dir + str(date) +".{ontfile}.mosdepth_{sample}.log"
+        logs_dir + str(date) + "_" + sample +".{ontfile}.mosdepth.log"
     benchmark:
-        benchmark_dir + str(date) + ".{sample}.mosdepth.benchmark.txt"
+        benchmark_dir + str(date) + "_" + sample +".{ontfile}.mosdepth.benchmark.txt"
         
     conda: "MASV_pipeline.yml"
     
     shell:
-        "mkdir {rules.mapping.input.aligner}/mosdepth && \
+        "mkdir "+aligner+"/mosdepth && \
                 mosdepth --threads {threads} -n \
                   --by {params.windowsize} \
-                  {params.aligner}/mosdepth/{params.prefix} {input.BAM} 2> {log}"
+                  {params.dir}mosdepth/{params.prefix} {input.BAM} 2> {log}"
 
 
 rule mosdepth_global_plot:
     input:
-        workingdir + str(date) + "/{rules.mapping.params.outdir}/mosdepth/{sample}.mosdepth.global.dist.txt"
+        plot = lambda wildcards: expand(rules.mosdepth_get.output.txt, ontfile=ontfiles.split(','))
     output:
-        protected(workingdir + str(date) + "/{params.outdir}/mosdepth_global_plot/global.html")
+        protected(outdir+"mosdepth/{ontfile}_global_plot.html")
     log:
-        logs_dir + str(date) +".{sample}_mosdepth_global_plot.log"
+        logs_dir + str(date) + "_" + sample +".{ontfile}.mosdepth_global_plot.log"
         
     conda: "MASV_pipeline.yml"
     
     shell:
         "python3 " + os.path.join(workflow.basedir, "lib/scr/mosdepth-plot-dist.py") + \
-            " {input} -o {output} 2> {log}"
+            " {input.plot} -o {output} 2> {log}"
             
             
 #####NANOPLOT####
 
 rule nanoplot_qc:
     input:
-        BAM = rules.mapping.output
+        BAM = lambda wildcards: expand(rules.mapping.output, ontfile=ontfiles.split(','))
     output:
-        DIR = directory((workingdir + str(date) + "/{rules.mapping.params.outdir}/nanoplot-qc")
+        DIR = directory(outdir+str(date)+"_"+sample+".{ontfile}_nanoplot-qc/")
     params:
-        sample = {sample}
-        title = str(date) + "_{sample}"
+        id = sample,
+        title = str(date) + "_"+sample+".{ontfile}"
         
-    threads: config["Minimap2"]["minimap2_cores"]
+    threads: config["Minimap2"]["minimap2_cores "]
     
     conda: "MASV_pipeline.yml"
     
     shell:
-        "NanoPlot -t {threads} --bam {input.BAM} --raw -o {output.DIR} -p {params.sample}_ --N50 --title {params.title}"
+        "NanoPlot -t {threads} --bam {input.BAM} --raw -o {output.DIR} -p {params.id}_ --N50 --title {params.title}"
