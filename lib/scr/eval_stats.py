@@ -5,7 +5,8 @@
 
 """
 Uses bedtools intersect from a conda environment with access to shell language to calculate the Recall and Precision of the benchmarking. 
-To filter the vcf files, it was used vcffilter from vcflib!
+To filter the vcf files, it was used vcffilter from vcflib for Sniffles filtering. After some tests, it proved to be more efficient for
+Svim to use simple awk commands
 Author: Diego Fuentes
 Contact email: diegofupa@gmail.com
 """
@@ -87,14 +88,15 @@ def main():
     if sniffles == True:
             dataset = "sniffles"
  
-            
+            feature = feature.replace("<", "")
+            feature = feature.replace(">", "")
             
             print("###############################")
             print("#Step 2: Reformatting the file#")
             print("###############################\n")
             
             try:
-                reformat = reformat_filter(calls, feature, tempfile ='sniffles_reformated.vcf')
+                reformat = sniffles_reformat(calls, feature, tempfile ='sniffles_reformated.vcf')
                 new_call = os.path.realpath('sniffles_reformated.vcf')
            
             except ValueError:
@@ -103,15 +105,15 @@ def main():
     #Reformat for svim                                                                       
     elif sniffles == False:
             dataset = "svim"
-            if feature == 'DUP':
-                feature = 'DUP:TANDEM'
+            if feature == '<DUP>':
+                feature = '<DUP:TANDEM>'
 
             print("###############################")
             print("#Step 2: Reformatting the file#")
             print("###############################\n")
             
             try:
-                reformat = reformat_filter(calls, feature, tempfile ='svim_reformated.vcf' )
+                reformat = svim_reformat(calls, feature, tempfile ='svim_reformated.vcf' )
                 new_call = os.path.realpath('svim_reformated.vcf')
                 
             except ValueError:
@@ -129,7 +131,8 @@ def main():
     #This is an optional step, if the conditions are met, will produce a plot
     try:
         check_plot =plot_filtering(hq, new_call, feature, iterator)    
-    except PlotError:
+    except ValueError:
+        sys.stderr.write("eval_stats.py: error: The plotting algorithm failed")
         sys.exit(-1)
 
     #Create a eval_stats.txt file      
@@ -157,37 +160,31 @@ def main():
         
 def svim_reformat(callset, featuretype, tempfile = 'svim_reformated.vcf'):
         """
-        Reformat the svim vcf callset filtering by feature type
+        Reformat the svim vcf callset filtering by feature type first using awk commands.
+        It was tested with bcftools view and vcffilter too but it performed faster with awk commands.
         """
-        if sniffles == False:
-             command_svim_1 = 'vcffilter -f \'SVTYPE = '+str(featuretype)+'\' '+ os.path.join(callset) + ' > ' + os.path.join(nwd, tempfile)
-             #command_svim_1 = 'cat ' + os.path.join(callset) + ' | awk \'OFS="\\t" {{ if($1 ~ /^#/) {{print $0}} else {{ if($5=="'+featuretype+'") {{ print $0 }} }}  }}\' > '+ \
-             #os.path.join(nwd, tempfile)
-             print(os.popen(command_svim_1).read())
 
-             if os.path.exists(os.path.realpath(tempfile)):
-                 return True
-             else:
-                 print("eval_stats.py: error: The svim_reformat step didn't work")
-                 sys.exit(-1)
+        command_svim_1 = 'cat ' + os.path.join(callset) + ' | awk \'OFS="\\t" {{ if($1 ~ /^#/) {{print $0}} else {{ if($5=="'+featuretype+'") {{ print $0 }} }}  }}\' > '+ \
+        os.path.join(nwd, tempfile)
+        print(os.popen(command_svim_1).read())
+
+        if os.path.exists(os.path.realpath(tempfile)):
+             return True
         else:
-             pass
+             print("eval_stats.py: error: The svim_reformat step didn't work")
+             sys.exit(-1)
+
  
     
-def reformat_filter(callset, featuretype, tempfile):
+def sniffles_reformat(callset, featuretype, tempfile ='sniffles_reformated.vcf'):
         """
-        Reformat the sniffles vcf callset filtering by feature type
+        Reformat the sniffles vcf callset filtering by feature type using vcffilter commands.
+        It was tested with bcftools view and awk too but it performed faster with awk commands
         """   
-        #if sniffles == True:
-            #print(os.path.join(callset))
+
         command_snif_1 = 'vcffilter -f \'SVTYPE = '+str(featuretype)+'\' '+ os.path.join(callset) + ' > ' + os.path.join(nwd, tempfile)
-        #command_snif_1 = 'bcftools view -i \'INFO/SVTYPE=="'+str(featuretype)+'"\' -O v -o' + os.path.join(nwd, tempfile) + '  ' + os.path.join(callset) 
-            #command_snif_1 = 'cat ' + os.path.join(callset) + ' | awk \'OFS="\\t" {{ if($1 ~ /^#/) {{ print $0 }} }}\' > '+os.path.join('header.tmp.vcf')
-            #command_snif_2 = 'cat ' + os.path.join(callset) + ' | awk \'OFS="\\t" {{ if($1 !~ /^#/) {{print $0}} }}\' | grep \"' + featuretype + '\" > '+os.path.join(nwd, 'subset.tmp.vcf')
-            #command_snif_3 = 'cat '+os.path.join(nwd, 'header.tmp.vcf')+' '+os.path.join(nwd, 'subset.tmp.vcf')+' > '+os.path.join(nwd, tempfile)
-            #print(os.popen(command_snif_1).read(), os.popen(command_snif_2).read(), os.popen(command_snif_3).read())
         print(os.popen(command_snif_1).read())
-            #print(os.popen('rm *.tmp.vcf').read())
+
 
 
         if os.path.exists(os.path.realpath(tempfile)):
@@ -248,12 +245,14 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
         
             for i in range(0, iterations, 1):
                 #i = i - 1 #To avoid issues with Python's indexing
+                #Recordar intentar sacar del loop el comando subcommand. Si solo genero un callset filtrado por featuretype, reduzco tiempo
                 #subcommand = 'grep -v \"hom_ref\" '+os.path.realpath(callset)+' | awk  \'OFS="\\t" {{ if($1 ~ /^#/) {{ print $0 }} else {{ if($6>='+str(i)+') {{ print $0 }} }} }}\' > '+os.path.join(nwd, 'filter.temp.vcf')
-                subcommand = 'vcffilter -f \'QUAL > '+str(i+1)+'\' '+ os.path.join(callset) + ' > ' + os.path.join(nwd, 'filter.temp.vcf')
+                #subcommand = 'vcffilter -f \'QUAL > '+str(i+1)+'\' '+ os.path.join(callset) + ' > ' + os.path.join(nwd, 'filter.temp.vcf')
+                subcommand = 'grep -v \"hom_ref\" '+os.path.realpath(callset)+' | awk  \'OFS="\\t" {{ if($1 ~ /^#/) {{ print $0 }} else {{ if($6>='+str(i)+') {{ print $0 }} }} }}\' > '+os.path.join(nwd, 'filter.temp.vcf')
                 print(os.popen(subcommand).read())                                                                                                                                     
-                new_calls = os.path.abspath('filter.temp.vcf')
-                reformated = reformat_filter(new_calls, featuretype, tempfile = 'temp.vcf')
-                reformated_call = os.path.abspath('temp.vcf')                                                            
+                new_calls = os.path.abspath('filter.temp.vcf')                                                           
+                reformated = svim_reformat(new_calls, featuretype, tempfile = 'temp.vcf')
+                reformated_call = os.path.abspath('temp.vcf')
                 results = recall_precision_stats(truth, reformated_call)
                 sensitivity = results.iloc[0]['Results in %']
                 precision = results.iloc[1]['Results in %']    
@@ -270,22 +269,22 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             
             #Let's start to plot
             print('\nNow lets plot it\n')
-            X = performance_matrix[:, 0]#Sensitivity values
-            Y = performance_matrix[:, 1]#Precision values
+            Y = performance_matrix[:, 0]#Sensitivity values
+            X = performance_matrix[:, 1]#Precision values
             F = performance_matrix[:, 2]#F1 values
 
 
             #Mean and standard deviation stored in a list. It will be added to the eval_stats.txt if plot == True
             result_list = []
-            mean_recall = np.mean(X)
+            mean_recall = np.mean(Y)
             result_list.append(mean_recall)
-            mean_precision = np.mean(Y)
+            mean_precision = np.mean(X)
             result_list.append(mean_precision)
             mean_f1 = np.mean(F)
             result_list.append(mean_f1)
-            std_recall = np.std(X)
+            std_recall = np.std(Y)
             result_list.append(std_recall)
-            std_precision = np.std(Y)
+            std_precision = np.std(X)
             result_list.append(std_precision)
             std_f1 = np.std(F)
             result_list.append(std_f1)
@@ -298,7 +297,7 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             #Subplot 1
             plt.subplot(2,2,1)
             plt.title("Sensitivity vs Precision trade-off")
-            line1, = plt.plot(Y, X, 'o-', color="b")
+            line1, = plt.plot(X, Y, 'o-', color="b")
             plt.xlabel('Precision')
             plt.xticks(np.arange(0, 0.55, 0.05))
             plt.ylabel('Sensitivity')
@@ -310,9 +309,9 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             #Subplot 2
             plt.subplot(2,2,2)
             plt.title("Precision based on the Svim Q score filtering")
-            line1, = plt.plot(np.arange(0, iterations), Y, 'o-', color="r")
-            plt.fill_between(np.arange(0, iterations), Y - std_precision / np.sqrt(10), \
-                         Y + std_precision / np.sqrt(10), alpha=0.1, color="green")
+            line1, = plt.plot(np.arange(0, iterations), X, 'o-', color="r")
+            plt.fill_between(np.arange(0, iterations), X - std_precision / np.sqrt(10), \
+                         X + std_precision / np.sqrt(10), alpha=0.1, color="green")
             plt.xlabel('Svim Q score selected')
             plt.xticks(np.arange(0, iterations))
             plt.ylabel('Precision')
@@ -324,9 +323,9 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             #Subplot 3
             plt.subplot(2,2,3)
             plt.title("Sensitivity based on the Svim Q score filtering")
-            line1, = plt.plot(np.arange(0, iterations), X, 'o-', color="g")
-            plt.fill_between(np.arange(0, iterations), X - std_recall / np.sqrt(10), \
-                         X + std_recall / np.sqrt(10), alpha=0.1, color="green")
+            line1, = plt.plot(np.arange(0, iterations), Y, 'o-', color="g")
+            plt.fill_between(np.arange(0, iterations), Y - std_recall / np.sqrt(10), \
+                         Y + std_recall / np.sqrt(10), alpha=0.1, color="green")
             plt.xlabel('Svim Q score selected')
             plt.xticks(np.arange(0, iterations))
             plt.ylabel('Sensitivity')
@@ -350,7 +349,7 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             plt.legend(handles=legend_handles, loc = 'best')
                               
             #Save the plot
-            plt.savefig(os.path.join(nwd, (str(dataset)+'_filtering'+str(featuretype)+'.png')))
+            plt.savefig(os.path.join(nwd, (str(dataset)+'_filtering'+str(featuretype)+'_iterator_'+str(iterations)+'.png')))
 
             return result_list
 
@@ -360,17 +359,20 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             print("#Optional Step: Creating the plot#")                                                                  
             print("############################################\n")
             
+            step = 1#This step variable is going to be used to plotting of sniffles
+            if iterations >= 100:
+                step = 10#If the number of iterations exceeds 100, change it to a decimal step
+            
             for i in range(0, iterations, 1):
                 #i = i - 1 #To avoid issues with Python's indexing
+                ##Recordar intentar sacar del loop el comando subcommand. Si solo genero un callset filtrado por featuretype, reduzco tiempo
                 #subcommand = 'vcffilter -f \'SVTYPE = '+str(featuretype)+' & RE > '+str(i)+'\' '+ os.path.join(callset) + ' > ' + os.path.join(nwd, 'filter.temp.vcf')
                 #subcommand = 'bcftools view -i \'INFO/SVTYPE=="'+str(featuretype)+'" && INFO/RE>='+str(i)+'\' -O v '+os.path.join(callset)+' | awk \'OFS="\\t" {{ if($1 !~ /^#/) {{print $0}} }}\' > '+os.path.join(nwd, 'filter.temp.vcf')
                 subcommand = 'vcffilter -f \'RE > '+str(i)+'\' '+ os.path.join(callset) + ' > ' + os.path.join(nwd, 'filter.temp.vcf')
                 print(os.popen(subcommand).read())                                                                                                                                     
                 new_calls = os.path.abspath('filter.temp.vcf')
-                reformated = reformat_filter(new_calls, featuretype, tempfile = 'temp.vcf')
+                reformated = sniffles_reformat(new_calls, featuretype, tempfile = 'temp.vcf')
                 reformated_call = os.path.abspath('temp.vcf')                                                           
-                #print("new calls is "+new_calls) 
-                #print("reformated call is "+reformated_call)
                 results = recall_precision_stats(truth=truth, callset=reformated_call)
                 sensitivity = results.iloc[0]['Results in %']
                 precision = results.iloc[1]['Results in %']    
@@ -428,11 +430,11 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             #Subplot 2
             plt.subplot(2,2,2)
             plt.title("Precision based on the Sniffles Read Support (RE) filtering")
-            line1, = plt.plot(np.arange(0, iterations), X, 'o-', color="r")
-            plt.fill_between(np.arange(0, iterations), X - std_precision / np.sqrt(10), \
+            line1, = plt.plot(np.arange(0, iterations, step), X, 'o-', color="r")
+            plt.fill_between(np.arange(0, iterations, step), X - std_precision / np.sqrt(10), \
                          X + std_precision / np.sqrt(10), alpha=0.1, color="green")
             plt.xlabel('Sniffles Read Support selected')
-            plt.xticks(np.arange(0, iterations))
+            plt.xticks(np.arange(0, iterations, step))
             plt.ylabel('Precision')
             plt.yticks(np.arange(0, 0.75, 0.05))
             legend_handles = [ mlines.Line2D([], [], color='r', marker='o', \
@@ -442,11 +444,11 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             #Subplot 3
             plt.subplot(2,2,3)
             plt.title("Sensitivity based on the Sniffles Read Support (RE) filtering")
-            line1, = plt.plot(np.arange(0, iterations), Y, 'o-', color="g")
-            plt.fill_between(np.arange(0, iterations), Y - std_recall / np.sqrt(10), \
+            line1, = plt.plot(np.arange(0, iterations, step), Y, 'o-', color="g")
+            plt.fill_between(np.arange(0, iterations, step), Y - std_recall / np.sqrt(10), \
                          Y + std_recall / np.sqrt(10), alpha=0.1, color="green")
             plt.xlabel('Sniffles Read Support selected')
-            plt.xticks(np.arange(0, iterations+10))
+            plt.xticks(np.arange(0, iterations, step))
             plt.ylabel('Sensitivity')
             plt.yticks(np.arange(0, 1.05, 0.05))
             legend_handles = [ mlines.Line2D([], [], color='g',marker='o', \
@@ -456,11 +458,11 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             #Subplot 4
             plt.subplot(2,2,4)
             plt.title("F1 score for Sniffles calls")
-            line1, = plt.plot(np.arange(0, iterations), F, 'o-', color="purple")
-            plt.fill_between(np.arange(0, iterations), F - std_f1 / np.sqrt(10), \
+            line1, = plt.plot(np.arange(0, iterations, step), F, 'o-', color="purple")
+            plt.fill_between(np.arange(0, iterations, step), F - std_f1 / np.sqrt(10), \
                          F + std_f1 / np.sqrt(10), alpha=0.1, color="green")
             plt.xlabel('Sniffles Read Support selected')
-            plt.xticks(np.arange(0, iterations))
+            plt.xticks(np.arange(0, iterations, step))
             plt.ylabel('F1 score')
             plt.yticks(np.arange(0, 0.75, 0.05))
             legend_handles = [ mlines.Line2D([], [], color='purple',marker='o', \
@@ -468,7 +470,7 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             plt.legend(handles=legend_handles, loc = 'best')
                               
             #Save the plot
-            plt.savefig(os.path.join(nwd, (str(dataset)+'_filtering'+str(featuretype)+'.png')))
+            plt.savefig(os.path.join(nwd, (str(dataset)+'_filtering_'+str(featuretype)+'_iterator_'+str(iterations)+'.png')))
 
             return result_list
         else:
