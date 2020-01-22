@@ -112,12 +112,24 @@ class VCFile:
             sv_info = SV_Info(item, caller)
 
             if fixing and sv_info.type in ['INS', 'DUP_INT', 'DUP/INS']:
+                #Here we are delimiting the range from start to end (end based on sv lenght)
+                #logging.debug("Changing {}/{} to {}/{}".format(sv_info.pos1,
+                #                                                 sv_info.pos2,
+                #                                                 sv_info.pos1,
+                #                                                 (sv_info.pos1 + sv_info.length)))
+                #sv_info.pos2 = sv_info.pos1 + sv_info.length
+                #sv_info.vcf_record.stop = sv_info.vcf_record.start + sv_info.length
+                #print(sv_info.vcf_record)
+                
+                #Here we are delimiting the range akin to bedtools slop adding to 
                 logging.debug("Changing {}/{} to {}/{}".format(sv_info.pos1,
                                                                  sv_info.pos2,
-                                                                 sv_info.pos1,
-                                                                 (sv_info.pos1 + sv_info.length)))
-                sv_info.pos2 = sv_info.pos1 + sv_info.length
-                sv_info.vcf_record.stop = sv_info.vcf_record.start + sv_info.length
+                                                                 (sv_info.pos1 - round(int(sv_info.length)/2)),
+                                                                 (sv_info.pos1 + round(int(sv_info.length)/2)))
+                sv_info.pos1 = sv_info.pos1 - round(int(sv_info.length)/2)
+                sv_info.pos2 = sv_info.pos1 + round(int(sv_info.length)/2)
+                sv_info.vcf_record.stop = sv_info.vcf_record.start + round(int(sv_info.length)/2)
+                sv_info.vcf_record.start = sv_info.vcf_record.start - round(int(sv_info.length)/2)
                 #print(sv_info.vcf_record)
 
             variants.append(sv_info)
