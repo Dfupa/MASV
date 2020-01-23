@@ -7,9 +7,9 @@ import sys
 import tempfile
 
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
-
+A
 from pysam import VariantFile
-from pysam import VariantHeader
+from pyfaidx import Faidx
 
 #########First create the SV_Info class
 class SV_Info:
@@ -17,18 +17,20 @@ class SV_Info:
     def __init__(self, vcf_provided, caller):
         self.id = vcf_provided.id
         self.type = vcf_provided.info.get('SVTYPE', None)
-        self.length = abs(vcf_provided.info.get('SVLEN', None))
         self.chr1 = vcf_provided.chrom
         self.pos1 = vcf_provided.pos
+        self.pos2 = vcf_provided.stop
         if caller == "sniffles":
+            self.length = abs(vcf_provided.info.get('SVLEN', None))
             self.read_support = vcf_provided.info.get('RE', None)
             self.chr2 = vcf_provided.info.get('CHR2', None)
-            self.pos2 = vcf_provided.info.get('END', None)
+            #self.pos2 = vcf_provided.info.get('END', None)
         else:
+            self.length = (vcf_provided.info.get('SVLEN', None))
             self.read_support = vcf_provided.qual #quality score of svim
             self.chr2 = None
             self.precise = None
-            self.pos2 = vcf_provided.info.get('END', None)
+            #self.pos2 = vcf_provided.info.get('END')
 
 
         if len(vcf_provided.samples.keys()) != 1:
@@ -46,9 +48,9 @@ class SV_Info:
                                                    self.precise)
 class VCFile:
     
-    def __init__(self, vcf_path, fix_param=False, caller="svim"):
-        self._variants, self.header = self.read_vcf(vcf_path, fixing=fix_param, caller="svim")
-        self.filtered_variants = self._variants
+    def __init__(self, vcf_path, genome, fix_param=False, caller="svim"):
+        self._variants, self.header = self.read_vcf(vcf_path, genome, fixing=fix_param, caller="svim")
+
         
         if caller == "sniffles":
 
@@ -85,7 +87,7 @@ class VCFile:
                              'INS': 'INS',
                              'INV': 'INV',
                              'BND': 'BND',
-                             'DUP:TANDEM': 'DUP',
+                             'DUP:TANDEM': 'DUP:TANDEM',
                              'DUP_INT': 'INS'}
 
 
@@ -103,50 +105,78 @@ class VCFile:
             return VCFile.SV_BASE_TYPE[sv_type]
         else:
             return sv_type
+    #def faidx_genome(self, genome):
+    #    fa = Faidx(genome)
+    #    dictio = {}
+    #    for item in fa.index:
+    #        dictio[item] = int(fa.index[item].rlen)
+    #    return dictio
     
-    def read_vcf(self, vcf_path, fixing=False, caller="svim"):
+    def read_vcf(self, vcf_path, genome, fixing=False, caller="svim"):
         variants = []
+        contig_lengths = {}
         vcf = VariantFile(vcf_path, "r")
-        header = VariantHeader(vcf_path, "r")
+        fa = Faidx(genome)
+        for item in fa.index:
+            contig_lengths[item] = int(fa.index[item].rlen)
+
         for item in vcf.fetch():
             sv_info = SV_Info(item, caller)
 
             if fixing and sv_info.type in ['INS', 'DUP_INT', 'DUP/INS']:
-                #Here we are delimiting the range from start to end (end based on sv lenght)
-                #logging.debug("Changing {}/{} to {}/{}".format(sv_info.pos1,
-                #                                                 sv_info.pos2,
-                #                                                 sv_info.pos1,
-                #                                                 (sv_info.pos1 + sv_info.length)))
-                #sv_info.pos2 = sv_info.pos1 + sv_info.length
-                #sv_info.vcf_record.stop = sv_info.vcf_record.start + sv_info.length
-                #print(sv_info.vcf_record)
-                
-                #Here we are delimiting the range akin to bedtools slop adding to 
                 logging.debug("Changing {}/{} to {}/{}".format(sv_info.pos1,
                                                                  sv_info.pos2,
                                                                  (sv_info.pos1 - round(int(sv_info.length)/2)),
-                                                                 (sv_info.pos1 + round(int(sv_info.length)/2)))
-                sv_info.pos1 = sv_info.pos1 - round(int(sv_info.length)/2)
-                sv_info.pos2 = sv_info.pos1 + round(int(sv_info.length)/2)
-                sv_info.vcf_record.stop = sv_info.vcf_record.start + round(int(sv_info.length)/2)
-                sv_info.vcf_record.start = sv_info.vcf_record.start - round(int(sv_info.length)/2)
+                                                                 (sv_info.pos1 + round(int(sv_info.length)/2))))
+
+                for contig in contig_lengths:
+                    if contig == sv_info.chr1:
+                        max_len = contig_lengths[contig]
+                        initial = int(sv_info.pos1 - round(int(sv_info.length)/2))
+                        #final = int(sv_info.pos1 + round(int(sv_info.length)/2))
+                        final = int(sv_info.pos1 + int(sv_info.length))
+                        real_start = sv_info.vcf_record.start - round(int(sv_info.length)/2)
+                        #real_stop = sv_info.vcf_record.start + round(int(sv_info.length)/2)
+                        real_stop = sv_info.vcf_record.start + int(sv_info.length)
+                        if initial < 0:
+                            initial = 0
+                        if final > max_len:
+                            final = max_len
+                        if real_start < 0:
+                            real_start = 0
+                        if real_stop > max_len:
+                            real_stop = max_len
+
+
+                        #sv_info.pos1 = initial
+                        sv_info.pos2 = final
+                        sv_info.vcf_record.stop = real_stop
+                        #sv_info.vcf_record.start = real_start
+                        #print("real start: "+str(sv_info.vcf_record.start)+" and real stop: "+str(real_stop)+" but the stop is "+str(sv_info.vcf_record.stop)+" and the length "+str(sv_info.vcf_record.rlen)+" and is a "+str(sv_info.vcf_record.info['SVTYPE']))
+
+
+                #sv_info.pos1 = int(sv_info.pos1 - round(int(sv_info.length)/2))
+                #sv_info.pos2 = int(sv_info.pos1 + round(int(sv_info.length)/2))
+                #sv_info.vcf_record.stop = sv_info.vcf_record.start + round(int(sv_info.length)/2)
+                #sv_info.vcf_record.start = sv_info.vcf_record.start - round(int(sv_info.length)/2)
                 #print(sv_info.vcf_record)
 
             variants.append(sv_info)
         return variants, vcf.header            
-            
-                    
+         
 
-    def check(self):
-        for variant in self._variants:
-            if variant.pos1 >= variant.pos2 and variant.type != 'BND':
-                logging.warning("POS1 >= POS2 for:")
-                logging.warning("{}".format(variant))
+    #def check(self):
+    #    for variant in self._variants:
+    #        print(variant.pos2)
+    #        if variant.pos1 >= variant.pos2 and variant.type != 'BND':
+    #            logging.warning("POS1 >= POS2 for:")
+    #            logging.warning("{}".format(variant))
+
                 
     def write_vcf(self, vcfpath):
         vcf = VariantFile(vcfpath, 'w', header=self.header)
-        for variant in self.filtered_variants:
-            vcf.write(variant.vcf_record_rec)
+        for variant in self._variants:
+            vcf.write(variant.vcf_record)
         vcf.close()
 #########Now let's set the main functions of the script####
 
@@ -167,13 +197,15 @@ def main(argv=sys.argv[1:]):
         raise OSError("Could not find {}.".format(vcf_file))
 
 
-    processed_file = VCFile(vcf_file, fix_param=True, caller=args.caller)
+    processed_file = VCFile(vcf_file, genome=args.GENOME, fix_param=True, caller=args.caller)
 
     # sniffles_file.fix_overlaping_ins_dup()
 
-    check_file(processed_file)
+    #check_file(processed_file)
 
     processed_file.write_vcf(args.OUTPUT)
+        
+                
 
 def check_file(vcf_file):
     vcf_file.check()
@@ -187,11 +219,11 @@ def parse_args(argv):
                         type=str,
                         required=True,
                         help='Input VCF file')
-    parser.add_argument("-g",
-                        dest="GENOME",
+    parser.add_argument('-g', '--genome',
+                        dest='GENOME',
                         type=str,
                         required=True,
-                        help="A .txt format file with the information provided by a faidx of the genome used to produce the sv calling")
+                        help='Input genome (.fa, .fasta) file')
     parser.add_argument('-o', '--output',
                         dest='OUTPUT',
                         type=str,
