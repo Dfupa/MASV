@@ -80,7 +80,6 @@ def main():
     else:
         cwd = os.chdir(nwd)
         nwd = os.getcwd()
-
     print("The original working dir was '"+str(owd)+"'. Results are going to be stored in '"+str(nwd)+"'.\n")
 
     #Provide only the file name for the callset
@@ -89,7 +88,7 @@ def main():
         #Reformat the feature name for sniffles based on the default example
     if sniffles == True:
             dataset = "sniffles"
- 
+            
             feature = feature.replace("<", "")
             feature = feature.replace(">", "")
             
@@ -107,6 +106,7 @@ def main():
     #Reformat for svim                                                                       
     elif sniffles == False:
             dataset = "svim"
+            
             if feature == '<DUP>':
                 feature = '<DUP:TANDEM>'
 
@@ -147,7 +147,7 @@ def main():
     file.write("\n")
     if plot == True:
         file.write("Note that the added columns 'Mean values' and 'Std values' stand for the mean and standard deviation of the iterative loop using a range of 0 to "+str(iterator)+" scores.\n")
-        results.insert(loc=2, column='Mean values', value=[check_plot[0],check_plot[1], check_plot[2]])
+        results.insert(loc=2, column='Average values', value=[check_plot[0],check_plot[1], check_plot[2]])
         results.insert(loc=3, column='Std values', value=[check_plot[3],check_plot[4], check_plot[5]])
         file.write("\n")
         file.write(results.to_string(index=False))
@@ -201,12 +201,11 @@ def sniffles_reformat(callset, featuretype, tempfile ='sniffles_reformated.vcf')
             sys.exit(-1)
         #else:
             #pass
-
 def recall_precision_stats(truth, callset):
         """
         Returns a table with the arithmetic 
         """
-
+        
         #Total number of variants in the hq dataset
         command_hq_1 =  'cat ' + os.path.abspath(truth) + ' | awk \'OFS="\\t" {{ if($1 !~ /^#/) {{print $0}} }}\' | wc -l'                           
         number_variants_hq = os.popen(command_hq_1).read()
@@ -216,22 +215,26 @@ def recall_precision_stats(truth, callset):
         number_variants_callset = os.popen(command_call_1).read()
 
         #Setting the intersect
-        intersect_command  = 'bedtools intersect -a '+os.path.abspath(truth)+' -b '+os.path.join(callset)+' -wa -wb > '+os.path.join(nwd, 'intersect.temp.bed')
-        print(os.popen(intersect_command).read())
+        #intersect_command  = 'bedtools intersect -a '+os.path.abspath(truth)+' -b '+os.path.join(callset)+' -wa -wb > '+os.path.join(nwd, 'intersect.temp.bed')
+        #print(os.popen(intersect_command).read())
         
-        command_cvst = 'cat '+os.path.abspath('intersect.temp.bed')+' | wc -l '
-        call_vs_truth = os.popen(command_cvst).read()
+        #command_cvst = 'cat '+os.path.abspath('intersect.temp.bed')+' | wc -l '
+        #call_vs_truth = os.popen(command_cvst).read()
 
-        command_tvsc = 'cat '+os.path.abspath('intersect.temp.bed')+' | cut -f 1-3 | sort | uniq | wc -l'
-        truth_vs_call = os.popen(command_tvsc).read()
+        #command_tvsc = 'cat '+os.path.abspath('intersect.temp.bed')+' | cut -f 1-3 | sort | uniq | wc -l'
+        #truth_vs_call = os.popen(command_tvsc).read()
                                                                           
         #Number of hits by the intersect -a truth -b callset
         #command_out_1 = 'bedtools intersect -u -a '+os.path.abspath(truth)+' -b '+os.path.join(callset)+' | wc -l'
-        #truth_vs_call = os.popen(command_out_1).read()
+        #command_out_1 = 'bedtools intersect -u -a '+os.path.abspath(truth)+' -b '+os.path.join(callset)+' -r -f 0.5 | wc -l'
+        command_out_1 = 'bedtools intersect -u -a '+os.path.abspath(truth)+' -b '+os.path.join(callset)+' -f 0.3 -F 0.7 -e | wc -l'
+        truth_vs_call = os.popen(command_out_1).read()
                                                                           
         #Number of hits by the intersect -a callset -b truth
         #command_out_2 = 'bedtools intersect -u -a '+os.path.join(callset)+' -b '+os.path.abspath(truth)+' | wc -l'
-        #call_vs_truth = os.popen(command_out_2).read()
+        #command_out_2 = 'bedtools intersect -u -a '+os.path.join(callset)+' -b '+os.path.abspath(truth)+' -r -f 0.5 | wc -l'
+        command_out_2 = 'bedtools intersect -u -a '+os.path.join(callset)+' -b '+os.path.abspath(truth)+' -f 0.7 -F 0.3 -e | wc -l'
+        call_vs_truth = os.popen(command_out_2).read()
 
         print("Hq set (TP+FN for recall): "+str(number_variants_hq))
         print("Callset (TP + FP for precision): "+str(number_variants_callset))
@@ -251,10 +254,9 @@ def recall_precision_stats(truth, callset):
     
         df.insert(loc=0, column='Eval Metrics', value=['Sensitivity','Precision', 'F1'])
 
-        print(os.popen('rm intersect.temp.bed').read())
+        #print(os.popen('rm intersect.temp.bed').read())
         
         return df
-    
 def plot_filtering(truth, callset, featuretype, iterations=20):
                                                                            
 
@@ -323,7 +325,7 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             plt.title("Sensitivity vs Precision trade-off")
             line1, = plt.plot(X, Y, 'o-', color="b")
             plt.xlabel('Precision')
-            plt.xticks(np.arange(0, 0.55, 0.05))
+            plt.xticks(np.arange(0, 1.05, 0.05))
             plt.ylabel('Sensitivity')
             plt.yticks(np.arange(0, 1.05, 0.05))
             legend_handles = [ mlines.Line2D([], [], color='b', marker='o', \
@@ -339,7 +341,7 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             plt.xlabel('Svim Q score selected')
             plt.xticks(np.arange(0, iterations, 2))
             plt.ylabel('Precision')
-            plt.yticks(np.arange(0, 0.75, 0.05))
+            plt.yticks(np.arange(0, 1.05, 0.05))
             legend_handles = [ mlines.Line2D([], [], color='r', marker='o', \
                             markersize=10, label='Precision')]
             plt.legend(handles=legend_handles, loc = 'best')
@@ -353,7 +355,7 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             plt.xlabel('Svim Q score selected')
             plt.xticks(np.arange(0, iterations, 2))
             plt.ylabel('Sensitivity')
-            plt.yticks(np.arange(0.6, 1.05, 0.05))
+            plt.yticks(np.arange(0, 1.05, 0.05))
             legend_handles = [ mlines.Line2D([], [], color='g',marker='o', \
                             markersize=10, label='Sensitivity')]
             plt.legend(handles=legend_handles, loc = 'best')
@@ -367,7 +369,7 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             plt.xlabel('Svim Q score selected')
             plt.xticks(np.arange(0, iterations, 2))
             plt.ylabel('F1 score')
-            plt.yticks(np.arange(0, 0.75, 0.05))
+            plt.yticks(np.arange(0, 1.05, 0.05))
             legend_handles = [ mlines.Line2D([], [], color='purple',marker='o', \
                             markersize=10, label='F1 score')]
             plt.legend(handles=legend_handles, loc = 'best')
@@ -502,7 +504,6 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
         else:
             pass
 
-
 def get_args():
 
     parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
@@ -514,9 +515,9 @@ def get_args():
     parser.add_argument('-sv', '--svtype', default='<DEL>', type=str,
                     help='Define the feature type to filter. '
                          'Default is <DEL>')
-    parser.add_argument('-s', '--sniffles', type=bool, default=False,
+    parser.add_argument('-s', '--sniffles', action='store_true',
                    help='Parameter used to reformat the sniffles callset if provided. Default is \'False\'.')
-    parser.add_argument('-p', '--plot', type=bool, default=False,
+    parser.add_argument('-p', '--plot', action='store_true',
                    help='Parameter used to produce a plot of the eval metrics for different svim score filtering. Default is \'False\'.')
     parser.add_argument('-i', '--iterator', type=int, default=20,
                    help='Parameter used in the plotting step. It is the max svim filtering or sniffles supporting reads score range indicated from 0 to \'--iterator\'. Default is \'20\', though we recomend higher values for sniffles read support.')
@@ -528,4 +529,3 @@ def get_args():
 
 if __name__ == '__main__':
     main()
-
