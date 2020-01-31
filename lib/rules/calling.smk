@@ -2,27 +2,51 @@
 ## SV CALLING RULES ##
 ######################
 
-rule sv_calling:
+
+rule sniffles_calling:
     input:
-        BAM = rules.sort_bam.output.outBAM,
-        svcaller = config["Inputs"]["svcaller_selection"],
-        ref = config["Inputs"]["reference_genome"]
+        BAM = outdir + sample +"_"+aligner+".{ontfile}.bam",
+        BAI = outdir + sample +"_"+ aligner+".{ontfile}.bam.bai"
     output:
-        VCF = protected(workingdir + str(date) + "/{params.outdir}/{sample}_{input.svcaller}.vcf"),
-        outDIR = directory(workingdir + str(date) + "/{params.outdir}/")
+        VCF = protected(svout+"/"+str(date)+"_Sniffles/{ontfile}/"+str(date)+"_"+sample+"_sniffles.{ontfile}.vcf"),
     params:
-        outdir = directory (config["Outputs"]["sv_call_out"]),
+        prefix = "{ontfile}",
         min_sv_length_sniffles = config["Sniffles"]["sniffles_min_sv_length"],
         max_sv_length_sniffles = config["Sniffles"]["sniffles_max_sv_length"],
         min_read_length_sniffles = config["Sniffles"]["sniffles_min_read_length"],
         min_read_map_quality_sniffles =  config["Sniffles"]["sniffles_min_read_mapping_quality"],
-        min_read_support_sniffles = config["Sniffles"]["sniffles_min_read_support"],
         num_reads_report_sniffles = config["Sniffles"]["sniffles_num_reads_report"],
         max_num_splits_sniffles = config["Sniffles"]["sniffles_num_reads_report"],
         genotype_sniffles = config["Sniffles"]["sniffles_genotype"],
-        cluster_sniffles = config["Sniffles"]["sniffles_cluster"],
+        cluster_sniffles = config["Sniffles"]["sniffles_cluster"],#not currently added in the sell command line
         min_homo_af_sniffles = config["Sniffles"]["sniffles_min_homo_af"],
         min_het_af_sniffles = config["Sniffles"]["sniffles_min_het_af"],
+        min_supp = config["Sniffles"]["sniffles_min_read_support"]
+        
+    threads:
+        config["Sniffles"]["sniffles_cores"] 
+        
+    log: logs_dir + str(date) + "_" + sample + "_sniffles.{ontfile}.svcalling.log"
+    
+    benchmark: benchmark_dir + str(date) + "_" + sample + "_sniffles.{ontfile}.sv.caller.benchmark.txt"
+        
+    conda: os.path.join(workflow.basedir, "MASV_pipeline.yml")
+        
+    shell:
+      "mkdir -p "+svout+"/"+str(date)+"_Sniffles/{params.prefix}; sniffles -m {input.BAM} -s {params.min_supp} -t {threads} -r {params.min_read_length_sniffles} \
+       -l {params.min_sv_length_sniffles} -d {params.max_sv_length_sniffles} \
+       -q {params.min_read_map_quality_sniffles} -n {params.num_reads_report_sniffles} \
+       {params.genotype_sniffles} --min_homo_af {params.min_homo_af_sniffles} \
+       --min_het_af {params.min_het_af_sniffles} --report_read_strands -v {output.VCF} 2> {log}"
+            
+rule svim_calling:
+    input:
+        BAM = outdir + sample +"_"+aligner+".{ontfile}.bam",
+        BAI = outdir + sample +"_"+ aligner+".{ontfile}.bam.bai",
+        ref = config["Inputs"]["reference_genome"]
+    output:
+        outVCF = protected(svout+"/"+str(date)+"_"+sample+"_svim.{ontfile}/final_results.vcf")
+    params:        
         min_sv_length_svim = config["Svim"]["svim_min_sv_length"],
         max_sv_lenght_svim = config["Svim"]["svim_max_sv_length"],
         min_read_length_svim = config["Svim"]["svim_min_read_length"],
@@ -33,55 +57,42 @@ rule sv_calling:
         sv_max_distance_svim = config["Svim"]["svim_sv_max_distance"],
         min_geno_score_svim = config["Svim"]["svim_min_geno_score"],
         homozygous_thresh_svim = config["Svim"]["svim_homozygous_thresh"],
-        heterozygous_thresh_svim = config["Svim"]["svim_heterozygous_thresh"]
-        
-    threads:
-        sniffles_threads = config["Sniffles"]["sniffles_cores"] 
-        
-    logs: logs_dir + str(date) + ".{ontfile}.svcalling.log"
-    
-    benchmark: benchmark_dir + str(date) + ".{ontfile}.sv.caller.benchmark.txt"
-        
-    conda: "MASV_pipeline.yml"
-        
-    run:
-        if svcaller == "sniffles":    #If the selected caller is sniffles
-            shell("sniffles -m {input.BAM} -v {output} -s {params.min_read_support_sniffles} \ 
-            -r {params.min_read_length_sniffles} -l {params.min_sv_length_sniffles} -d {params.max_sv_length_sniffles} \
-            -q {params.min_read_map_quality_sniffles} -n {params.num_reads_report_sniffles} \
-            --genotype {params.genotype_sniffles} --min_homo_af {params.min_homo_af_sniffles} \
-            --min_het_af {params.min_het_af_sniffles} --cluster {params.cluster_sniffles} --report_read_strands \
-            -v {output.VCF} 2> {logs}")
-            
-        if svcaller == "svim":        #If the selected caller is svim
-            shell("svim alignment --min_sv_size {params.min_sv_length_svim} --max_sv_size {params.max_sv_length_svim} \
-            --min_mapq {params.min_read_mapp_quality} --distance_normalizer {params.min_read_length_svim} \
-            --segment_gap_tolerance {params.gap_tolerance_svim} --segment_overlap_tolerance {params.overlap_tolerance_svim} \
-            --trans_partition_max_distance{params.partition_max_distance_svim} --trans_sv_max_distance {params.sv_max_distance_svim} \
-            --minimum_score {params.svim_min_geno_score} --homozygous_threshold {params.homozygous_thresh_svim} \
-            --heterozygous_threshold {params.heterozygous_thresh_svim} --minimum_depth {params.min_depth_svim} \
-            --duplications_as_insertions {output.outDIR} {input.BAM} {input.ref} 2> {logs}")
+        heterozygous_thresh_svim = config["Svim"]["svim_heterozygous_thresh"],
+        min_depth_svim = config["Svim"]["svim_min_depth"]
+
+    threads: 1
+
+    log: logs_dir + str(date) + "_" + sample + "_svim.{ontfile}.svcalling.log"
+
+    benchmark: benchmark_dir + str(date) + "_" + sample + "_svim.{ontfile}.sv.caller.benchmark.txt"
+
+    conda: os.path.join(workflow.basedir, "MASV_pipeline.yml")
+
+    shell:   
+        "svim alignment "+svout+"/"+str(date)+"_"+sample+"_svim.{wildcards.ontfile}/ {input.BAM} {input.ref} \
+         --min_sv_size {params.min_sv_length_svim} --max_sv_size {params.max_sv_lenght_svim} \
+         --min_mapq {params.min_read_mapp_quality} --distance_normalizer {params.min_read_length_svim} \
+         --segment_gap_tolerance {params.gap_tolerance_svim} --segment_overlap_tolerance {params.overlap_tolerance_svim} \
+         --trans_partition_max_distance {params.partition_max_distance_svim} --trans_sv_max_distance {params.sv_max_distance_svim} \
+         --minimum_score {params.min_geno_score_svim} --homozygous_threshold {params.homozygous_thresh_svim} \
+         --heterozygous_threshold {params.heterozygous_thresh_svim} --minimum_depth {params.min_depth_svim} \
+         --duplications_as_insertions  2> {log}"
 
 rule filter_svim:
     input:
-        rules.sv_calling.output.outDIR + "final_results.vcf"
-        
+        rules.svim_calling.output.outVCF        
     output:
-        protected(rules.sv_calling.output.outDIR + "minscore_{params.minscore,[0-9]+}.vcf") #Note that a numeric constraint is added
-    
+        protected(svout+"/"+str(date)+"_"+sample+"_svim.{ontfile}/final_results_minscore_"+str(minscore)+".vcf")    
     threads: 1
     
     params:
-        minscore = config["Svim"]["svim_mins_core"]
+        minscore = config["Svim"]["svim_min_score"]
    
-   logs:
-        logs_dir + str(date) + ".{ontfile}.svim_filtering.log"
+    log:
+        logs_dir + str(date) + "_" + sample + ".{ontfile}.svim_filtering.log"
             
-    conda: "MASV_pipeline.yml"
+    conda: os.path.join(workflow.basedir, "MASV_pipeline.yml")
         
-    run:
-        if rules.sv_calling.input.svcaller == "svim"
-            shell("grep -v \"hom_ref\" {input} | awk '{{ if($1 ~ /^#/) {{ print $0 }} \
-            else {{ if($6>={params.minscore}) {{ print $0 }} }} }}' > {output} 2> {logs}")
-        else:
-            shell("echo 'The filter_svim step is aborted as it is not necessary for Sniffles calling. Continuing.' 2> {logs}")
+    shell:
+        "grep -v \"hom_ref\" {input} | awk '{{ if($1 ~ /^#/) {{ print $0 }} \
+        else {{ if($6>={params.minscore}) {{ print $0 }} }} }}' > {output} 2> {log}"
