@@ -9,7 +9,6 @@ import os
 from datetime import datetime
 import sys
 sys.path.append('/lib/src/')
-from helper_find_file import find_files
 from helper_find_file import which_tech
 
 date1 = str(datetime.now())
