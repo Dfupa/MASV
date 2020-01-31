@@ -151,35 +151,20 @@ class VCFile:
                     for contig in contig_lengths:
                         if contig == sv_info.chr1:
                             max_len = contig_lengths[contig]
-                            initial = int(sv_info.pos1 - round(int(sv_info.length)/2))
-                            #final = int(sv_info.pos1 + round(int(sv_info.length)/2))
                             final = int(sv_info.pos1 + int(sv_info.length))
-                            real_start = sv_info.vcf_record.start - round(int(sv_info.length)/2)
-                            #real_stop = sv_info.vcf_record.start + round(int(sv_info.length)/2)
                             real_stop = sv_info.vcf_record.start + int(sv_info.length)
-                            #if initial < 0:
-                            #    initial = 0
+
                             if final > max_len:
                                 final = max_len
-                            #if real_start < 0:
-                            #    real_start = 0
                             if real_stop > max_len:
                                 real_stop = max_len
 
 
-                            #sv_info.pos1 = initial
                             sv_info.pos2 = final
                             sv_info.vcf_record.stop = real_stop
-                            #sv_info.vcf_record.start = real_start
-                            print("real start: "+str(sv_info.vcf_record.start)+" and real stop: "+str(real_stop)+" but the stop is "+str(sv_info.vcf_record.stop)+" and the length "+str(sv_info.vcf_record.rlen)+" and is a "+str(sv_info.vcf_record.info['SVTYPE']))
+                            #print("real start: "+str(sv_info.vcf_record.start)+" and real stop: "+str(real_stop)+" but the stop is "+str(sv_info.vcf_record.stop)+" and the length "+str(sv_info.vcf_record.rlen)+" and is a "+str(sv_info.vcf_record.info['SVTYPE']))
                 else:
                     pass
-
-                #sv_info.pos1 = int(sv_info.pos1 - round(int(sv_info.length)/2))
-                #sv_info.pos2 = int(sv_info.pos1 + round(int(sv_info.length)/2))
-                #sv_info.vcf_record.stop = sv_info.vcf_record.start + round(int(sv_info.length)/2)
-                #sv_info.vcf_record.start = sv_info.vcf_record.start - round(int(sv_info.length)/2)
-                #print(sv_info.vcf_record)
 
             variants.append(sv_info)
         return variants, vcf.header            
