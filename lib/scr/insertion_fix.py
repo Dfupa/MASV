@@ -7,6 +7,9 @@
 Description:
 Script to fix the insertion calls end position based on sv length in order to be used by bedtools intersect. It takes into account the chromsize (contigsize) of the 
 provided genome to make sure it does not exceed the contig max length.
+
+Author: Diego Fuentes
+Contact email: diegofupa@gmail.com
 """
 
 import random
@@ -115,7 +118,6 @@ class VCFile:
         else:
             return sv_type
 
-    #Define main fix method
     
     def read_vcf(self, vcf_path, genome, fixing=False, caller="svim"):
         """
@@ -129,7 +131,6 @@ class VCFile:
         - fixing: Boolean. When set to True takes into account the abovementioned SVs for fixing.
         - caller: Str. Selected caller provided as an argument. It is required by the SV_Info object.  
         """
-        
         variants = []
         contig_lengths = {}
         vcf = VariantFile(vcf_path, "r")
@@ -139,7 +140,7 @@ class VCFile:
 
         for item in vcf.fetch():
             sv_info = SV_Info(item, caller)
-            
+
             if fixing and sv_info.type in ['INS', 'DUP_INT', 'DUP/INS']:
                 if int(sv_info.pos2 - sv_info.pos1) <= 1:
                     logging.debug("Changing {}/{} to {}/{}".format(sv_info.pos1,
@@ -173,12 +174,16 @@ class VCFile:
                             print("real start: "+str(sv_info.vcf_record.start)+" and real stop: "+str(real_stop)+" but the stop is "+str(sv_info.vcf_record.stop)+" and the length "+str(sv_info.vcf_record.rlen)+" and is a "+str(sv_info.vcf_record.info['SVTYPE']))
                 else:
                     pass
-                
+
+                #sv_info.pos1 = int(sv_info.pos1 - round(int(sv_info.length)/2))
+                #sv_info.pos2 = int(sv_info.pos1 + round(int(sv_info.length)/2))
+                #sv_info.vcf_record.stop = sv_info.vcf_record.start + round(int(sv_info.length)/2)
+                #sv_info.vcf_record.start = sv_info.vcf_record.start - round(int(sv_info.length)/2)
+                #print(sv_info.vcf_record)
+
             variants.append(sv_info)
         return variants, vcf.header            
-    
-    #Method for writing the vcf back
-    
+                
     def write_vcf(self, vcfpath):
         vcf = VariantFile(vcfpath, 'w', header=self.header)
         for variant in self._variants:
@@ -200,7 +205,6 @@ def main(argv=sys.argv[1:]):
     args = parse_args(argv=argv)
 
     #First two quick path.exists checks
-    
     vcf_file = args.VCF
     if not os.path.exists(vcf_file):
         raise OSError("Could not find {}.".format(vcf_file))
@@ -208,13 +212,10 @@ def main(argv=sys.argv[1:]):
     genome_file = args.GENOME
     if not os.path.exists(genome_file):
         raise OSError("Could not find {}.".format(genome_file))
-        
-    #Main body of the correction
+
 
     processed_file = VCFile(vcf_file, genome=genome_file, fix_param=True, caller=args.caller)
-    
-    #Wrap it up and save it as a vcf file.
-    
+
     processed_file.write_vcf(args.OUTPUT)
         
                     
