@@ -5,11 +5,9 @@ shell.prefix("source ~/.bashrc; ")
 #Date:2020-01-05
 
 import os
-#import glob
 from datetime import datetime
 import sys
 sys.path.append('./lib/scr/')
-from helper_functions import find_files
 from helper_functions import which_tech
 
 date1 = str(datetime.now())
@@ -31,7 +29,7 @@ workingdir = config["Parameters"]["basedir"]
 outdir = config["Outputs"]["alignment_out"]
 svout = config["Outputs"]["svcall_out"]
 aligner = config["Inputs"]["aligner_selection"]
-#svcaller = config["Inputs"]["svcaller_selection"]
+
 
 
 #Benchmark directory
