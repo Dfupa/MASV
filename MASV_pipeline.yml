@@ -139,6 +139,7 @@ dependencies:
   - pthread-stubs=0.4=h14c3975_1001
   - pyasn1=0.4.7=py_0
   - pyasn1-modules=0.0.5=py36_0
+  - pybedtools=0.8.1=py36he513fc3_0
   - pycparser=2.19=py36_1
   - pygments=2.4.2=py_0
   - pygraphviz=1.3.1=py36_0
@@ -172,11 +173,13 @@ dependencies:
   - sqlite=3.30.1=hcee41ef_0
   - statsmodels=0.10.1=py36hc1659b7_1
   - survivor=1.0.6=h6bb024c_0
+  - svim=1.2.0=py_0
   - tclap=1.2.1=h470a237_1
   - tk=8.6.9=hed695b0_1003
   - tornado=6.0.3=py36h516909a_0
   - typing_extensions=3.7.4.1=py36_0
   - urllib3=1.12=py36_0
+  - vcflib=1.0.0_rc2=h56106d0_2
   - vcftools=0.1.16=he860b03_3
   - wheel=0.33.6=py36_0
   - wrapt=1.11.2=py36h516909a_0
@@ -201,11 +204,15 @@ dependencies:
   - zlib=1.2.11=h516909a_1006
   - zstd=1.4.3=h3b9ef0a_0
   - pip:
+    - dinopy==2.0.3
     - intervaltree==3.0.2
     - progressbar2==3.41.0
     - pyfaidx==0.5.5.2
     - pysam==0.15.2
     - python-levenshtein==0.12.0
     - python-utils==2.3.0
+    - simlord==1.0.4
     - sortedcontainers==2.1.0
     - truvari==1.3.4
+prefix: /home/devel/dfuentes/.conda/envs/MASV_pipeline
+
