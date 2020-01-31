@@ -75,8 +75,7 @@ rule svim_calling:
          --segment_gap_tolerance {params.gap_tolerance_svim} --segment_overlap_tolerance {params.overlap_tolerance_svim} \
          --trans_partition_max_distance {params.partition_max_distance_svim} --trans_sv_max_distance {params.sv_max_distance_svim} \
          --minimum_score {params.min_geno_score_svim} --homozygous_threshold {params.homozygous_thresh_svim} \
-         --heterozygous_threshold {params.heterozygous_thresh_svim} --minimum_depth {params.min_depth_svim} \
-         --duplications_as_insertions  2> {log}"
+         --heterozygous_threshold {params.heterozygous_thresh_svim} --minimum_depth {params.min_depth_svim} 2> {log}"
 
 rule filter_svim:
     input:
