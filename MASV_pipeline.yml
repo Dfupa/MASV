@@ -214,5 +214,5 @@ dependencies:
     - simlord==1.0.4
     - sortedcontainers==2.1.0
     - truvari==1.3.4
-prefix: /home/devel/dfuentes/.conda/envs/MASV_pipeline
+#prefix: /home/devel/dfuentes/.conda/envs/MASV_pipeline
 
