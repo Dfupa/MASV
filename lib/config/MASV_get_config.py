@@ -27,6 +27,7 @@ class CreateConfigurationFile(object):
         self.sample_barcode = None                           #Sample barcode 
         self.basedir = self.sample_barcode                   #Base directory for the pipeline run
         self.seq_technology = "nanopore"                     #Sequencing technology
+        self.single = False                                  #Parameter that is going to be used for the helper function
 
         #INPUT PARAMETERS
 
@@ -34,7 +35,6 @@ class CreateConfigurationFile(object):
         self.reference_genome = None             #Reference genome provided in .fa or .fa.gz format
         self.hq_vcf = None                       #Provided high confidence .vcf/.bed for eval_stats.py. It can be used to provide a .vcf.gz for truvari evaluation (Alpha)
         self.aligner_selection = "minimap2"      #Default aligner
-
 
         #OUTPUT PARAMETERS
 
@@ -70,14 +70,14 @@ class CreateConfigurationFile(object):
 
         self.sniffles_cores = 4                     #Number of threads to run the sniffles SV caller
         self.sniffles_min_sv_length = 40            #Minimum SV length
-        self.sniffles_max_sv_length = 100000        #Maximum SV length
+        self.sniffles_max_sv_length = 1000          #Maximum distance to group SV together
         self.sniffles_min_read_length = 1000        #Minimum read length
         self.sniffles_min_read_mapping_quality = 20 #Min mapping quality. Reads will lower mapping quality will be discarded
         self.sniffles_min_read_support = 10         #Minimum read support required to call a SV
         self.sniffles_num_reads_report = 0          #Report up to N reads that support the SV in the vcf file. -1: report all.
         self.sniffles_max_num_splits = 7            #Maximum number of splits per read to be still taken into account
-        self.sniffles_genotype = False              #Enables Sniffles to compute the genotypes.
-        self.sniffles_cluster = False               #Enables Sniffles to phase SVs that occur on the same reads
+        self.sniffles_genotype = '--genotype'       #Enables Sniffles to compute the genotypes.
+        self.sniffles_cluster = '--cluster'         #Enables Sniffles to phase SVs that occur on the same reads
         self.sniffles_min_homo_af = 0.8             #Minimum variant allele frequency to be called as homozygous
         self.sniffles_min_het_af = 0.2              #Minimum variant allele frequency to be called as heterozygous
 
@@ -134,6 +134,7 @@ class CreateConfigurationFile(object):
         general_group.add_argument('--logs-dir', dest="logs_dir", metavar="logs_dir", help='Directory to keep all the log files. Default sample_barcode id.')
         general_group.add_argument('--sample-barcode', dest="sample_barcode", metavar="sample_barcode", help='Sample barcode. Default %s.' % self.sample_barcode)
         general_group.add_argument('--basedir', dest="basedir", metavar="basedir", help='Base directory for the pipeline run. Default %s.' % self.basedir)
+        general_group.add_argument('--single', dest="single", type=bool, default=self.single, help='Parameter used for the helper function find_files. Default %s.' % self.single)
         general_group.add_argument('--sequencing-technology', type=str, dest="seq_technology", metavar="seq_technology", default=self.seq_technology, help='Parameter used for determining the sequencing technology ("nanopore" or "pacbio"). Default %s.' % self.seq_technology)
 
     def register_input(self, parser):
@@ -147,7 +148,8 @@ class CreateConfigurationFile(object):
         input_group.add_argument('--reference-genome', dest="reference_genome", metavar="reference_genome", help='Reference genome provided in .fa or .fa.gz format. Your path is  %s.' % self.reference_genome)
         input_group.add_argument('--hq-vcf', dest="hq_vcf", metavar="hq_vcf", help='Provided high confidence .vcf/.bed for eval_stats.py. It can be used to provide a .vcf.gz for truvari evaluation (Alpha). Your path is  %s.' % self.hq_vcf) 
         input_group.add_argument('--aligner-selection', dest="aligner_selection", metavar="aligner_selection", default=self.aligner_selection, help='Selects the aligner to be used in the pipeline. Default "%s".' % self.aligner_selection)
-        
+
+
     
     def register_output(self, parser):
         """Register all output parameters with the given
@@ -210,14 +212,14 @@ class CreateConfigurationFile(object):
         sniffles_group = parser.add_argument_group('Sniffles parameters')
         sniffles_group.add_argument('--sniffles-cores', type=int, dest="sniffles_cores", metavar="sniffles-cores", default=self.sniffles_cores, help='Number of threads to run the sniffles SV caller. Default %s.' % self.sniffles_cores)
         sniffles_group.add_argument('--sniffles-min-sv-length', type=int, dest="sniffles_min_sv_length", metavar="sniffles-min-sv-length", default=self.sniffles_min_sv_length, help='Minimum SV length. Default %s.' % self.sniffles_min_sv_length)
-        sniffles_group.add_argument('--sniffles-max-sv-length', type=int, dest="sniffles_max_sv_length", metavar="sniffles-max-sv-length", default=self.sniffles_max_sv_length, help='Maximum SV length. Default %s.' % self.sniffles_max_sv_length)
+        sniffles_group.add_argument('--sniffles-max-sv-length', type=int, dest="sniffles_max_sv_length", metavar="sniffles-max-sv-length", default=self.sniffles_max_sv_length, help='Maximum distance to group SV together. Default %s.' % self.sniffles_max_sv_length)
         sniffles_group.add_argument('--sniffles-min-read-length', type=int, dest="sniffles_min_read_length", metavar="sniffles-min-read-length", default=self.sniffles_min_read_length, help='Minimum read length. Discard read if non of its segment is larger then this. Default %s.' % self.sniffles_min_read_length)
         sniffles_group.add_argument('--sniffles-min-read-mapping-quality', type=int, dest="sniffles_min_read_mapping_quality", metavar="sniffles-min-read-mapping-quality", default=self.sniffles_min_read_mapping_quality, help='Min mapping quality. Reads will lower mapping quality will be discarded. Default %s.' % self.sniffles_min_read_mapping_quality)
         sniffles_group.add_argument('--sniffles-min-read-support', type=int, dest="sniffles_min_read_support", metavar="sniffles-min-read-support", default=self.sniffles_min_read_support, help='Minimum read support required to call a SV. Default %s.' % self.sniffles_min_read_support)
         sniffles_group.add_argument('--sniffles-num-reads-report', type=int, dest="sniffles_num_reads_report", metavar="sniffles-num-reads-report", default=self.sniffles_num_reads_report, help='Report up to N reads that support the SV in the vcf file. -1: report all. Default %s.' % self.sniffles_num_reads_report)
         sniffles_group.add_argument('--sniffles-max-num-splits', type=int, dest="sniffles_max_num_splits", metavar="sniffles-max-num-splits", default=self.sniffles_max_num_splits, help='Maximum number of splits per read to be still taken into account. Default %s.' % self.sniffles_max_num_splits)
-        sniffles_group.add_argument('--sniffles-genotype', type=bool, dest="sniffles_genotype", metavar="sniffles-genotype", default=self.sniffles_genotype, help='Enables Sniffles to compute the genotypes. Default "%s".' % self.sniffles_genotype)
-        sniffles_group.add_argument('--sniffles-cluster', type=bool, dest="sniffles_cluster", metavar="sniffles-cluster", default=self.sniffles_cluster, help='Enables Sniffles to phase SVs that occur on the same reads. Default "%s".' % self.sniffles_cluster)
+        sniffles_group.add_argument('--sniffles-genotype', type=str, dest="sniffles_genotype", metavar="sniffles-genotype", default=self.sniffles_genotype, help='Enables Sniffles to compute the genotypes. Default "%s" set to True' % self.sniffles_genotype)
+        sniffles_group.add_argument('--sniffles-cluster', type=str, dest="sniffles_cluster", metavar="sniffles-cluster", default=self.sniffles_cluster, help='Enables Sniffles to phase SVs that occur on the same reads. Default "%s" set to True.' % self.sniffles_cluster)
         sniffles_group.add_argument('--sniffles-min-homo-af', type=int, dest="sniffles_min_homo_af", metavar="sniffles-min-homo-af", default=self.sniffles_min_homo_af, help='Minimum variant allele frequency to be called as homozygous. Default %s.' % self.sniffles_min_homo_af)
         sniffles_group.add_argument('--sniffles-min-het-af', type=int, dest="sniffles_min_het_af", metavar="sniffles-min-het-af", default=self.sniffles_min_het_af, help='Minimum variant allele frequency to be called as heterozygous. Default %s.' % self.sniffles_min_het_af)
 
@@ -285,7 +287,7 @@ class CreateConfigurationFile(object):
             sys.exit(-1)
             
         if args.reference_genome:
-            args.reference_genome = os.path.abspath(args.reference_genome)+ "/"
+            args.reference_genome = os.path.abspath(args.reference_genome)
         else:
             args.reference_genome = working_dir + "reference/genome.fa"
 
@@ -307,17 +309,17 @@ class CreateConfigurationFile(object):
             args.alignment_out = args.basedir + self.alignment_out + "/"
 
         if args.sv_call_out:
-            args.sv_call_out = os.path.abspath(args.sv_call_out) + "/"
+            args.sv_call_out = os.path.abspath(args.sv_call_out)
         else:
-            args.sv_call_out = args.alignment_out  + self.sv_call_out + "/"
+            args.sv_call_out = args.alignment_out  + self.sv_call_out
 
         ##Assign wildcards
 
         if args.ONT_fastqs == None:
             for r, d, f in os.walk(args.ONT_reads_directory):
                 for file in f:
-                    if re.search('.1.fastq.gz', file):
-                        a = file.replace('.1.fastq.gz','')
+                    if re.search('.fastq', file):
+                        a = file.replace('.fastq','')
                         ont_barcodes.append(a)
                         if args.ONT_fastqs == None:
                             args.ONT_fastqs = a
@@ -336,6 +338,7 @@ class CreateConfigurationFile(object):
         self.generalParameters["basedir"] = args.basedir
         self.generalParameters["logs_dir"] = args.logs_dir
         self.generalParameters["sample_barcode"] = args.sample_barcode
+        self.generalParameters["single"] = args.single
         self.generalParameters["seq_technology"] = args.seq_technology
         self.allParameters["Parameters"] = self.generalParameters
 
@@ -394,6 +397,7 @@ class CreateConfigurationFile(object):
         self.ngmlrParameters["ngmlr_mismatch_score"] = args.ngmlr_mismatch_score
         self.ngmlrParameters["ngmlr_gap_open_score"] = args.ngmlr_gap_open_score
         self.ngmlrParameters["ngmlr_gap_extend_min"] = args.ngmlr_gap_extend_min
+        self.ngmlrParameters["ngmlr_gap_extend_max"] = args.ngmlr_gap_extend_max
         self.ngmlrParameters["ngmlr_kmer_length"] = args.ngmlr_kmer_length
         self.ngmlrParameters["ngmlr_kmer_skip"] = args.ngmlr_kmer_skip
         self.allParameters ["Ngmlr"] = self.ngmlrParameters
@@ -407,7 +411,7 @@ class CreateConfigurationFile(object):
         """
         self.snifflesParameters["sniffles_cores"] = args.sniffles_cores
         self.snifflesParameters["sniffles_min_sv_length"] = args.sniffles_min_sv_length
-        self.snifflesParameters["sniffles_min_sv_length"] = args.sniffles_min_sv_length
+        self.snifflesParameters["sniffles_max_sv_length"] = args.sniffles_max_sv_length
         self.snifflesParameters["sniffles_min_read_length"] = args.sniffles_min_read_length
         self.snifflesParameters["sniffles_min_read_mapping_quality"] = args.sniffles_min_read_mapping_quality
         self.snifflesParameters["sniffles_min_read_support"] = args.sniffles_min_read_support
