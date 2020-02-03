@@ -8,8 +8,6 @@ Description:
 Script to fix the insertion calls end position based on sv length in order to be used by bedtools intersect. It takes into account the chromsize (contigsize) of the 
 provided genome to make sure it does not exceed the contig max length.
 
-Author: Diego Fuentes
-Contact email: diegofupa@gmail.com
 """
 
 import random
