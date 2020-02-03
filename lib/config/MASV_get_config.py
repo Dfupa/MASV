@@ -324,7 +324,15 @@ class CreateConfigurationFile(object):
                         if args.ONT_fastqs == None:
                             args.ONT_fastqs = a
                         else:
-                            args.ONT_fastqs += "," + a               
+                            args.ONT_fastqs += "," + a
+                            
+                    elif re.search('.fastq.gz', file):
+                        a = file.replace('.fastq.gz','')
+                        ont_barcodes.append(a)
+                        if args.ONT_fastqs == None:
+                            args.ONT_fastqs = a
+                        else:
+                            args.ONT_fastqs += "," + a 
 
 ###
 
