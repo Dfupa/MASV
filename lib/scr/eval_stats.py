@@ -10,8 +10,6 @@ Uses bedtools intersect from a conda environment with access to shell language t
 To filter the vcf files, it was used vcffilter from vcflib for Sniffles filtering. After some tests, it proved to be more efficient for
 Svim to use simple awk commands.
 
-Author: Diego Fuentes
-Contact email: diegofupa@gmail.com
 """
 from __future__ import print_function
 
@@ -178,11 +176,7 @@ def svim_reformat(callset, featuretype, tempfile = 'svim_reformated.vcf'):
         os.path.join(nwd, tempfile)
         print(os.popen(command_svim_1).read())
 
-        #if os.path.exists(os.path.realpath(tempfile)):
-        #     return True
-        #else:
-        #     print("eval_stats.py: error: The svim_reformat step didn't work")
-        #     sys.exit(-1)
+
         if not os.path.exists(os.path.realpath(tempfile)):
              raise OSError("Could not find {}.".format(tempfile))
 
@@ -204,14 +198,6 @@ def sniffles_reformat(callset, featuretype, tempfile ='sniffles_reformated.vcf')
         print(os.popen(command_snif_1).read())
 
 
-
-        #if os.path.exists(os.path.realpath(tempfile)):
-        #    return True
-        #else:
-        #    print("eval_stats.py: error: The sniffles_reformat step didn't work")
-        #    sys.exit(-1)
-        #else:
-            #pass
         if not os.path.exists(os.path.realpath(tempfile)):
              raise OSError("Could not find {}.".format(tempfile))
 
@@ -240,26 +226,15 @@ def recall_precision_stats(truth, callset):
         command_call_1 = 'cat ' + os.path.join(callset) + ' | awk \'OFS="\\t" {{ if($1 !~ /^#/) {{print $0}} }}\' | wc -l'                                                                 
         number_variants_callset = os.popen(command_call_1).read()
 
-        #Setting the intersect
-        #intersect_command  = 'bedtools intersect -a '+os.path.abspath(truth)+' -b '+os.path.join(callset)+' -wa -wb > '+os.path.join(nwd, 'intersect.temp.bed')
-        #print(os.popen(intersect_command).read())
-        
-        #command_cvst = 'cat '+os.path.abspath('intersect.temp.bed')+' | wc -l '
-        #call_vs_truth = os.popen(command_cvst).read()
-
-        #command_tvsc = 'cat '+os.path.abspath('intersect.temp.bed')+' | cut -f 1-3 | sort | uniq | wc -l'
-        #truth_vs_call = os.popen(command_tvsc).read()
-                                                                          
+         
         #Number of hits by the intersect -a truth -b callset
-        #command_out_1 = 'bedtools intersect -u -a '+os.path.abspath(truth)+' -b '+os.path.join(callset)+' | wc -l'
-        #command_out_1 = 'bedtools intersect -u -a '+os.path.abspath(truth)+' -b '+os.path.join(callset)+' -r -f 0.5 | wc -l'
-        command_out_1 = 'bedtools intersect -u -a '+os.path.abspath(truth)+' -b '+os.path.join(callset)+' -f 0.3 -F 0.7 -e | wc -l'
+        command_out_1 = 'bedtools intersect -u -a '+os.path.abspath(truth)+' -b '+os.path.join(callset)+' -r -f 0.5 | wc -l'
+        #command_out_1 = 'bedtools intersect -u -a '+os.path.abspath(truth)+' -b '+os.path.join(callset)+' -f 0.3 -F 0.7 -e | wc -l'
         truth_vs_call = os.popen(command_out_1).read()
                                                                           
         #Number of hits by the intersect -a callset -b truth
-        #command_out_2 = 'bedtools intersect -u -a '+os.path.join(callset)+' -b '+os.path.abspath(truth)+' | wc -l'
-        #command_out_2 = 'bedtools intersect -u -a '+os.path.join(callset)+' -b '+os.path.abspath(truth)+' -r -f 0.5 | wc -l'
-        command_out_2 = 'bedtools intersect -u -a '+os.path.join(callset)+' -b '+os.path.abspath(truth)+' -f 0.7 -F 0.3 -e | wc -l'
+        command_out_2 = 'bedtools intersect -u -a '+os.path.join(callset)+' -b '+os.path.abspath(truth)+' -r -f 0.5 | wc -l'
+        #command_out_2 = 'bedtools intersect -u -a '+os.path.join(callset)+' -b '+os.path.abspath(truth)+' -f 0.7 -F 0.3 -e | wc -l'
         call_vs_truth = os.popen(command_out_2).read()
 
         print("Hq set (TP+FN for recall): "+str(number_variants_hq))
@@ -280,7 +255,7 @@ def recall_precision_stats(truth, callset):
     
         df.insert(loc=0, column='Eval Metrics', value=['Recall','Precision', 'F1'])
 
-        #print(os.popen('rm intersect.temp.bed').read())
+
         
         return df
 def plot_filtering(truth, callset, featuretype, iterations=20):
@@ -312,12 +287,8 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
             #We set the iterative loop.
             for i in range(0, iterations+1, 1):
                 print('\033[1m'+'Iteration: '+str(i+1)+'.'+'\033[0m')
-                #subcommand = 'grep -v \"hom_ref\" '+os.path.realpath(callset)+' | awk  \'OFS="\\t" {{ if($1 ~ /^#/) {{ print $0 }} else {{ if($6>='+str(i)+') {{ print $0 }} }} }}\' > '+os.path.join(nwd, 'filter.temp.vcf')
-                #subcommand = 'vcffilter -f \'QUAL > '+str(i+1)+'\' '+ os.path.join(callset) + ' > ' + os.path.join(nwd, 'filter.temp.vcf')
                 subcommand = 'grep -v \"hom_ref\" '+os.path.realpath('filter.temp.vcf')+' | awk  \'OFS="\\t" {{ if($1 ~ /^#/) {{ print $0 }} else {{ if($6>='+str(i)+') {{ print $0 }} }} }}\' > '+os.path.join(nwd, 'temp.vcf')
                 print(os.popen(subcommand).read())                                                                                                                                     
-                #new_calls = os.path.abspath('filter.temp.vcf')                                                           
-                #reformated = svim_reformat(new_calls, featuretype, tempfile = 'temp.vcf')
                 reformated_call = os.path.abspath('temp.vcf')
                 results = recall_precision_stats(truth, reformated_call)
                 sensitivity = results.iloc[0]['Results in proportion']
@@ -329,7 +300,6 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
                 performance_matrix[i, 2] = f1
                 #Remove temp files
                 print(os.popen('rm temp.vcf').read())
-                #print(os.popen('rm temp.vcf').read())
 
             print(os.popen('rm filter.temp.vcf').read())
                 
@@ -445,10 +415,7 @@ def plot_filtering(truth, callset, featuretype, iterations=20):
                 print('\033[1m'+'Iteration: '+str(i+1)+'.'+'\033[0m')
                 #subcommand = 'vcffilter -f \'SVTYPE = '+str(featuretype)+' & RE > '+str(i)+'\' '+ os.path.join(callset) + ' > ' + os.path.join(nwd, 'filter.temp.vcf')
                 subcommand = 'bcftools view -i \'INFO/RE>='+str(i)+'\' -O v '+os.path.join('filter.temp.vcf')+' > '+os.path.join(nwd, 'temp.vcf')
-                #subcommand = 'vcffilter -f \'RE > '+str(i)+'\' '+ os.path.join('filter.temp.vcf') + ' > ' + os.path.join(nwd, 'temp.vcf')
                 print(os.popen(subcommand).read())                                                                                                                                     
-                #new_calls = os.path.abspath('filter.temp.vcf')
-                #reformated = sniffles_reformat(new_calls, featuretype, tempfile = 'temp.vcf')
                 reformated_call = os.path.abspath('temp.vcf')                                                           
                 results = recall_precision_stats(truth=truth, callset=reformated_call)
                 sensitivity = results.iloc[0]['Results in proportion']
