@@ -9,7 +9,7 @@ import os
 ###################
 # ALIGNMENT RULES #
 ###################
-print(config["Inputs"]["ONT_reads_directory"] + "{ontfile}.fastq")
+
 
 if aligner == "minimap2":
     rule mapping_minimap2:
