@@ -45,7 +45,7 @@ if aligner == "minimap2":
 elif aligner == "ngmlr":
     rule mapping_ngmlr:
         input:
-            reads = config["Inputs"]["ONT_reads_directory"] + "{ontfile}.fastq",
+            reads = expand(config["Inputs"]["ONT_reads_directory"] + "{ontfile}.{format}", ontfile=ontfiles.split(','), format=["fastq", "fastq.gz"]),
             ref = config["Inputs"]["reference_genome"]
         output:
             protected(outdir + sample +"_"+ aligner + ".{ontfile}.bam")
