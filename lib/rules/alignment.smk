@@ -14,7 +14,7 @@ import os
 if aligner == "minimap2":
     rule mapping_minimap2:
         input:
-            reads = expand(config["Inputs"]["ONT_reads_directory"] + "{ontfile}.fastq", ontfile=ontfiles.split(',')),
+            reads = expand(config["Inputs"]["ONT_reads_directory"] + "{ontfile}.{format}", ontfile=ontfiles.split(','), format=["fastq", "fastq.gz"]),
             ref = config["Inputs"]["reference_genome"]
         output:
             protected(outdir + sample +"_"+aligner+".{ontfile}.bam")
