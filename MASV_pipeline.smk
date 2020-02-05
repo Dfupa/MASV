@@ -129,7 +129,7 @@ rule sniffles:
     input:
         stats=expand(outdir + sample +"_"+ aligner + "/alignment_stats/{ontfile}.alignment_stats.txt",
         ontfile=ontfiles.split(',')),
-        snifflesvcf=expand(svout+"/"+str(date)+"_"+sample+"_sniffles.{ontfile}.vcf", ontfile=ontfiles.split(','))
+        snifflesvcf=expand(svout+"/"+str(date)+"_Sniffles/{ontfile}/"+str(date)+"_"+sample+"_sniffles.{ontfile}.vcf", ontfile=ontfiles.split(',')))
     log:
         logs_dir + str(date) + "_" + sample +"_"+aligner+".sniffles.rule.log"
 
