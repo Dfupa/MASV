@@ -21,7 +21,7 @@ class CreateConfigurationFile(object):
         """Class constructor of the pipeline"""
         #GENERAL PARAMETERS
 
-        self.configFile = None                               #Name of the json configuration file to be created.
+        self.configFile = "config.json"                      #Name of the json configuration file to be created.
         self.version = 1                                     #Pipeline version
         self.logs_dir = "logs"                               #Directory to keep all the log files
         self.sample_barcode = None                           #Sample barcode 
