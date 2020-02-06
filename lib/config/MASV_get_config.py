@@ -460,7 +460,7 @@ configManager = CreateConfigurationFile()
 
 #2.Create object for argument parsinng
 parser = argparse.ArgumentParser(prog="create_configuration_file",
-                description="Create a configuration json file for the LRSV pipeline."
+                description="Create a configuration json file for the MASV pipeline."
                 )     
 
 #2.1 Updates arguments and parsing
