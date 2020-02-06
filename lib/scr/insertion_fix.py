@@ -143,8 +143,8 @@ class VCFile:
                 if int(sv_info.pos2 - sv_info.pos1) <= 1:
                     logging.debug("Changing {}/{} to {}/{}".format(sv_info.pos1,
                                                                    sv_info.pos2,
-                                                                   (sv_info.pos1 - round(int(sv_info.length)/2)),
-                                                                   (sv_info.pos1 + round(int(sv_info.length)/2))))
+                                                                   sv_info.pos1,
+                                                                   (sv_info.pos1 + int(sv_info.length)))
 
                     for contig in contig_lengths:
                         if contig == sv_info.chr1:
@@ -160,7 +160,6 @@ class VCFile:
 
                             sv_info.pos2 = final
                             sv_info.vcf_record.stop = real_stop
-                            #print("real start: "+str(sv_info.vcf_record.start)+" and real stop: "+str(real_stop)+" but the stop is "+str(sv_info.vcf_record.stop)+" and the length "+str(sv_info.vcf_record.rlen)+" and is a "+str(sv_info.vcf_record.info['SVTYPE']))
                 else:
                     pass
 
