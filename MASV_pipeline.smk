@@ -73,7 +73,6 @@ include: "lib/rules/alignment.smk"
 include: "lib/rules/QC.smk"
 include: "lib/rules/calling.smk"
 include: "lib/rules/bedtools_eval.smk"
-#include: "lib/rules/truvari_eval.smk"
 
 ##############
 # MAIN RULES #
