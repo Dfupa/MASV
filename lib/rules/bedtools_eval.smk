@@ -51,7 +51,6 @@ rule vcf_reformat_svim:
 #BEDTOOLS EVALUATION#
 #####################
 
-#Is currently unavailable.
 
 rule eval_stats_sniffles:
     input:
