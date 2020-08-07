@@ -102,8 +102,6 @@ rule all:
         reformatsniffles=expand(svout+"/"+str(date)+"_Sniffles/{ontfile}/"+str(date)+"_"+sample+"_reformated_sniffles.{ontfile}.vcf", ontfile=ontfiles.split(',')),
         eval_sniffles=expand(svout+"/"+str(date)+"_Sniffles/{ontfile}/Eval_stats_sniffles_DEL.txt", ontfile=ontfiles.split(',')),
         eval_svim=expand(svout+"/"+str(date)+"_"+sample+"_svim.{ontfile}/Eval_stats_svim_DEL.txt", ontfile=ontfiles.split(','))
-
-
     log:
         logs_dir + str(date) + "_" + sample +"_"+aligner+".all.rule.log"
 
@@ -115,11 +113,11 @@ rule mapping_only:
         ontfile=ontfiles.split(',')),
         stats=expand(outdir + sample +"_"+ aligner + "/alignment_stats/{ontfile}.alignment_stats.txt",
         ontfile=ontfiles.split(',')),
-	dist=expand(outdir + "mosdepth/"+ sample + "_"+ aligner+ ".{ontfile}.mosdepth.global.dist.txt",
+        dist=expand(outdir + "mosdepth/"+ sample + "_"+ aligner+ ".{ontfile}.mosdepth.global.dist.txt",
         ontfile=ontfiles.split(',')),
         plot=expand(outdir + "mosdepth/" + sample  +"_"+aligner+ ".{ontfile}_global_plot.html",
-	ontfile=ontfiles.split(',')),
-	nanoplot=expand(outdir + str(date) + "_" + sample + ".{ontfile}_nanoplot-qc/",
+        ontfile=ontfiles.split(',')),
+        nanoplot=expand(outdir + str(date) + "_" + sample + ".{ontfile}_nanoplot-qc/",
         ontfile=ontfiles.split(','))
     log:
         logs_dir + str(date) + "_" + sample +"_"+aligner+".mapping.only.rule.log"
@@ -128,7 +126,8 @@ rule sniffles:
     input:
         stats=expand(outdir + sample +"_"+ aligner + "/alignment_stats/{ontfile}.alignment_stats.txt",
         ontfile=ontfiles.split(',')),
-        snifflesvcf=expand(svout+"/"+str(date)+"_Sniffles/{ontfile}/"+str(date)+"_"+sample+"_sniffles.{ontfile}.vcf", ontfile=ontfiles.split(',')))
+        snifflesvcf=expand(svout+"/"+str(date)+"_Sniffles/{ontfile}/"+str(date)+"_"+sample+"_sniffles.{ontfile}.vcf",
+        ontfile=ontfiles.split(','))
     log:
         logs_dir + str(date) + "_" + sample +"_"+aligner+".sniffles.rule.log"
 
@@ -140,7 +139,7 @@ rule svim:
         ontfile=ontfiles.split(',')),
         svimfilt=expand(svout+"/"+str(date)+"_"+sample+"_svim.{ontfile}/final_results_minscore_{minscore}.vcf",
         ontfile=ontfiles.split(','),
-	minscore=config["Svim"]["svim_min_score"])
+        minscore=config["Svim"]["svim_min_score"])
     log:
         logs_dir + str(date) + "_" + sample +"_"+aligner+".svim.rule.log"
 
@@ -163,7 +162,7 @@ rule eval_svim:
 rule sanity_check:
     input:
         stats=expand(outdir + sample +"_"+ aligner + "/alignment_stats/{ontfile}.alignment_stats.txt",
-	ontfile=ontfiles.split(',')),
+        ontfile=ontfiles.split(',')),
         dist=expand(outdir + "mosdepth/"+ sample + "_"+ aligner+ ".{ontfile}.mosdepth.global.dist.txt",
         ontfile=ontfiles.split(',')),
         plot=expand(outdir + "mosdepth/" + sample  +"_"+aligner+ ".{ontfile}_global_plot.html",
