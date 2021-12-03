@@ -1,4 +1,4 @@
-# MASV pipeline
+# MASV: A **M**is-**A**ssembly detection and **S**tructural **V**ariant calling pipeline.
 A **M**is-**A**ssembly detection and **S**tructural **V**ariant calling pipeline.
 
 ![logo.png](https://github.com/Dfupa/MASV-pipeline/blob/master/masv-logo-small.png)
